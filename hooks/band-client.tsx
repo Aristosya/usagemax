@@ -14,14 +14,14 @@ const Band: ClientModule<BandView> = (v, surface) => {
   })
   return (
     <Box flexDirection="row" alignItems="center" flexWrap="nowrap" overflow="hidden" columnGap={2}>
-      <Box flexDirection="row" alignItems="center" gap={1} borderStyle="round" borderColor="claude" paddingX="xs">
+      <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0} borderStyle="round" borderColor="claude" paddingX="xs">
         <Text color="claude">{v.ring}</Text>
         <Text color="text" bold mono tabular>
           {v.share}
         </Text>
       </Box>
       {v.limits.map(l => (
-        <Box flexDirection="row" alignItems="center" gap={1}>
+        <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
           <Text dimColor>{l.label}</Text>
           <Box flexDirection="row">
             {l.filled > 0 && (
@@ -36,7 +36,7 @@ const Band: ClientModule<BandView> = (v, surface) => {
             )}
           </Box>
           <Text color="text" bold mono tabular>{`${l.pct}%`}</Text>
-          <Text dimColor>{l.reset}</Text>
+          {l.reset !== null && <Text dimColor>{l.reset}</Text>}
           {l.estimate !== null && <Text color="warning">{l.estimate}</Text>}
         </Box>
       ))}

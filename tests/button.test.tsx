@@ -4,11 +4,11 @@ import type { Engine } from 'claude-code/testing'
 import { type Kit, kit, runTurn, seed, start } from './kit'
 import { HOME } from './memdisk'
 
-const BAND = (hasSurvey = false) =>
+const BAND = (hasSurvey = false, bodyColumns = 200) =>
   ({
     plugin: 'usagemax',
     component: 'AbovePrompt',
-    props: { hasSurvey, isWorking: false, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    props: { hasSurvey, isWorking: false, maxRows: 10, bodyColumns, scroll: { offset: 0, bodyRows: 10 }, view: {} },
     surface: 'desktop',
   }) as const
 const MODE = (modes: string[]) => ({ plugin: 'usagemax', component: 'SessionMode', props: { modes }, surface: 'desktop' }) as const
@@ -98,6 +98,16 @@ test('warns about the week next to the week when it runs out before its reset', 
   const warnings = all.filter(x => x.includes('кончится ≈'))
   expect(warnings).toHaveLength(1)
   expect(all.indexOf(warnings[0] ?? '')).toBeGreaterThan(all.indexOf('неделя'))
+})
+
+test('fits a narrow band on one row by dropping the bars and the times to reset', async ($, on) => {
+  await afterOneTurn($, on)
+  const ui = await $.ui.mount(BAND(false, 30))
+  const d = walk(await ui.drawn({ in: CLIENT }))
+  await ui.unmount()
+  expect(texts(d).filter(x => /━/.test(x.text))).toEqual([])
+  expect(text(d, /^\d+ д \d+ ч$/)).toBeUndefined()
+  expect(text(d, '18%')?.text).toBe('18%')
 })
 
 test('fills the ring when the first request starts, before its answer', async ($, on) => {

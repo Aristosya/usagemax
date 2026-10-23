@@ -58,19 +58,53 @@ function whenText(at: number, now: number, tz: number, lang: Lang): string {
 }
 
 /** The band's limits as plain data, every string in the person's language: what the surface module draws. */
-export function bandView(b: ButtonState, now: number, tz: number): BandView {
+/** What the band gives up, in order, to stay on one row: the estimate's words, the times to reset, then the bars. */
+type Fit = { longEstimate: boolean; reset: boolean; bar: number }
+const FITS: readonly Fit[] = [
+  { longEstimate: true, reset: true, bar: BAR_WIDTH },
+  { longEstimate: false, reset: true, bar: BAR_WIDTH },
+  { longEstimate: false, reset: false, bar: BAR_WIDTH },
+  { longEstimate: false, reset: false, bar: BAR_WIDTH / 2 },
+  { longEstimate: false, reset: false, bar: 0 },
+]
+
+function viewAt(b: ButtonState, now: number, tz: number, fit: Fit): BandView {
   const lang = b.lang ?? 'ru'
   const limit = (label: string, r: WindowReading | null | undefined, color: string, runsOutAt: number | null | undefined): BandLimit[] => {
     if (!r) return []
-    const filled = Math.round((Math.min(100, Math.max(0, r.pct)) / 100) * BAR_WIDTH)
-    const estimate = typeof runsOutAt === 'number' ? t(lang, 'band.runsOut', { time: whenText(runsOutAt, now, tz, lang) }) : null
-    return [{ label, color, pct: r.pct, filled, empty: BAR_WIDTH - filled, reset: formatDuration(Date.parse(r.resetsAt) - now, lang), estimate }]
+    const filled = Math.round((Math.min(100, Math.max(0, r.pct)) / 100) * fit.bar)
+    const time = typeof runsOutAt === 'number' ? whenText(runsOutAt, now, tz, lang) : null
+    const estimate = time === null ? null : t(lang, fit.longEstimate ? 'band.runsOut' : 'band.runsOutShort', { time })
+    const reset = fit.reset ? formatDuration(Date.parse(r.resetsAt) - now, lang) : null
+    return [{ label, color, pct: r.pct, filled, empty: fit.bar - filled, reset, estimate }]
   }
   return {
     ring: ringGlyph(b.ring),
     share: shareText(b),
     limits: [...limit(t(lang, 'band.5h'), b.five, ACCENT, b.fiveRunsOutAt), ...limit(t(lang, 'band.week'), b.week, WEEK_COLOR, b.weekRunsOutAt)],
   }
+}
+
+/** The band's width in cells as the surface module lays it out: the chip in its border, then each limit. */
+export function bandWidth(v: BandView): number {
+  const chip = 4 + [...v.ring].length + 1 + [...v.share].length
+  const limit = (l: BandLimit) => {
+    const bar = l.filled + l.empty
+    const parts = [l.label, bar > 0 ? '━'.repeat(bar) : null, `${l.pct}%`, l.reset, l.estimate].filter((p): p is string => p !== null)
+    return parts.reduce((sum, p) => sum + [...p].length, 0) + parts.length - 1
+  }
+  return chip + v.limits.reduce((sum, l) => sum + 2 + limit(l), 0)
+}
+
+/**
+ * The band's limits as plain data, every string in the person's language: what the surface module draws.
+ * `columns` is the band's width (0 when unknown): the first fit that stays on one row is drawn.
+ */
+export function bandView(b: ButtonState, now: number, tz: number, columns = 0): BandView {
+  const views = FITS.map(fit => viewAt(b, now, tz, fit))
+  const full = views[0] as BandView
+  if (columns <= 0) return full
+  return views.find(v => bandWidth(v) <= columns) ?? (views.at(-1) as BandView)
 }
 
 function isOpenMessage(data: unknown): boolean {
@@ -90,7 +124,7 @@ export function usageButton(on: On): void {
     const b = await read($, button)
     const now = await $.clock.now()
     const tz = -new Date(now).getTimezoneOffset()
-    const view = bandView(b, now, tz)
+    const view = bandView(b, now, tz, e.props.bodyColumns)
     const els = $.ui.resolve(e)
     const { Box, Text, Button } = els
     if ('Client' in els && !(await read($, bandFailed))) {
@@ -99,12 +133,12 @@ export function usageButton(on: On): void {
     }
     return (
       <Box flexDirection="row" alignItems="center" flexWrap="nowrap" overflow="hidden" columnGap={2}>
-        <Box flexDirection="row" alignItems="center" gap={1} borderStyle="round" borderColor={ACCENT} paddingX="xs">
+        <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0} borderStyle="round" borderColor={ACCENT} paddingX="xs">
           <Text color={ACCENT}>{view.ring}</Text>
           <Button key={CHIP_KEY} label={view.share} plain onPress={() => openPanel($)} />
         </Box>
         {view.limits.map(l => (
-          <Box flexDirection="row" alignItems="center" gap={1}>
+          <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0}>
             <Text dimColor>{l.label}</Text>
             <Box flexDirection="row">
               {l.filled > 0 && (
@@ -119,7 +153,7 @@ export function usageButton(on: On): void {
               )}
             </Box>
             <Text color="text" bold mono tabular>{`${l.pct}%`}</Text>
-            <Text dimColor>{l.reset}</Text>
+            {l.reset !== null && <Text dimColor>{l.reset}</Text>}
             {l.estimate !== null && <Text color="warning">{l.estimate}</Text>}
           </Box>
         ))}

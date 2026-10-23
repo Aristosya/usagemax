@@ -117,7 +117,7 @@ export type ButtonState = {
 }
 
 /** One limit as the band's surface module draws it: every string already in the person's language. */
-export type BandLimit = { label: string; color: string; pct: number; filled: number; empty: number; reset: string; estimate: string | null }
+export type BandLimit = { label: string; color: string; pct: number; filled: number; empty: number; reset: string | null; estimate: string | null }
 
 /** The props of the band's surface module: plain data, as a `Client` takes it. */
 export type BandView = { ring: string; share: string; limits: BandLimit[] }
