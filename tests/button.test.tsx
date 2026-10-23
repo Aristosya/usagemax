@@ -110,6 +110,17 @@ test('fits a narrow band on one row by dropping the bars and the times to reset'
   expect(text(d, '18%')?.text).toBe('18%')
 })
 
+test('speaks English when Claude Code has no language set', async ($, on) => {
+  const k = kit(on, { language: null })
+  await seed(k)
+  await start($)
+  await runTurn($, k, { turnId: 't1', after: { five: 18, week: 20 } })
+  const d = await band($)
+  expect(text(d, '5h')?.text).toBe('5h')
+  expect(text(d, 'week')?.text).toBe('week')
+  expect(text(d, '5 ч')).toBeUndefined()
+})
+
 test('fills the ring when the first request starts, before its answer', async ($, on) => {
   const k = kit(on)
   const at = k.clock.now() - 100_000

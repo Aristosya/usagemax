@@ -7,12 +7,15 @@ test('every key exists in ru and en', () => {
   for (const lang of ['ru', 'en'] as const) for (const text of Object.values(MESSAGES[lang])) expect(text.length > 0).toBe(true)
 })
 
-test('falls back to Russian', () => {
-  expect(langFromConfig('Default (English)')).toBe('ru')
-  expect(langFromConfig(undefined)).toBe('ru')
+test('speaks English unless Claude Code is set to Russian', () => {
+  expect(langFromConfig(undefined)).toBe('en')
+  expect(langFromConfig('')).toBe('en')
+  expect(langFromConfig('Default (English)')).toBe('en')
+  expect(langFromConfig('English')).toBe('en')
+  expect(langFromConfig('Japanese')).toBe('en')
   expect(langFromConfig('Russian')).toBe('ru')
   expect(langFromConfig('русский')).toBe('ru')
-  expect(langFromConfig('English')).toBe('en')
+  expect(langFromConfig('Default (Russian)')).toBe('ru')
 })
 
 test('fills parameters', () => {

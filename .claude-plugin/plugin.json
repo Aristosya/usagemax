@@ -1,6 +1,6 @@
 {
   "name": "usagemax",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Shows how much of the Claude 5-hour and weekly usage limits each request and each chat used",
   "author": { "name": "Roman Chernogorov & Danil Martsinkovskii" },
   "homepage": "https://github.com/Aristosya/usagemax",

@@ -69,7 +69,7 @@ const FITS: readonly Fit[] = [
 ]
 
 function viewAt(b: ButtonState, now: number, tz: number, fit: Fit): BandView {
-  const lang = b.lang ?? 'ru'
+  const lang = b.lang ?? 'en'
   const limit = (label: string, r: WindowReading | null | undefined, color: string, runsOutAt: number | null | undefined): BandLimit[] => {
     if (!r) return []
     const filled = Math.round((Math.min(100, Math.max(0, r.pct)) / 100) * fit.bar)

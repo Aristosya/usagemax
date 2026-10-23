@@ -20,7 +20,8 @@ export type Kit = {
 }
 
 /** Everything beneath the plugin in a test: disk, env, clock, store, session facts and limit readings. */
-export function kit(on: On, o: { sessionId?: string; now?: number } = {}): Kit {
+/** `language` is Claude Code's setting; the suite reads Russian strings, so Russian unless a test says otherwise. */
+export function kit(on: On, o: { sessionId?: string; now?: number; language?: string | null } = {}): Kit {
   const disk = memDisk(o.now ?? 1_000_000)
   const clock = mock.clock(on, { now: o.now ?? 1_000_000 })
   const k: Kit = { disk, clock, limits: { five: 7, week: 20, fiveResets: WINDOW_A }, sessionId: o.sessionId ?? 's1', opened: [], registered: [], toasts: [] }
@@ -71,7 +72,9 @@ export function kit(on: On, o: { sessionId?: string; now?: number } = {}): Kit {
     k.opened.push(e.id)
     return { value: { isPlaced: true } }
   })
-  on('config.list', () => ({ value: [] }))
+  const language = o.language === undefined ? 'Russian' : o.language
+  const row = { key: 'language', label: 'Language', kind: 'text' as const, value: language ?? '', provider: { plugin: 'engine', tier: 'core' as const }, isLocked: false }
+  on('config.list', () => ({ value: language === null ? [] : [row] }))
   on('ui.toast', (_$, e) => {
     k.toasts.push(e.text)
     return { value: undefined }

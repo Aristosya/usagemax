@@ -150,11 +150,10 @@ export function t(lang: Lang, key: MsgKey, params: Readonly<Record<string, strin
   return MESSAGES[lang][key].replace(/\{(\w+)\}/g, (all, name: string) => (name in params ? String(params[name]) : all))
 }
 
-/** Claude Code's `language` setting; unset ("Default (…)") means Russian, the owner's language. */
+/** Claude Code's `language` setting: Russian when it names Russian, English otherwise and when unset. */
 export function langFromConfig(value: unknown): Lang {
   const text = typeof value === 'string' ? value : ''
-  if (/russian|рус/i.test(text) || /default/i.test(text)) return 'ru'
-  return /english/i.test(text) ? 'en' : 'ru'
+  return /russian|рус/i.test(text) ? 'ru' : 'en'
 }
 
 /** `1 запрос`, `3 запроса`, `12 запросов`; English has one and many. */
@@ -179,6 +178,6 @@ export async function langOf($: EngineInterface): Promise<Lang> {
   try {
     return langFromConfig((await $.config.list()).find(row => row.key === 'language')?.value)
   } catch {
-    return 'ru'
+    return 'en'
   }
 }

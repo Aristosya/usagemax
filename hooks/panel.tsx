@@ -176,7 +176,7 @@ export async function isPanelReady($: EngineInterface): Promise<boolean> {
 
 export async function openPanel($: EngineInterface): Promise<void> {
   await refreshPanel($)
-  await $.ui.open({ id: PANE_ID, title: t((await read($, panel))?.lang ?? 'ru', 'panel.title') })
+  await $.ui.open({ id: PANE_ID, title: t((await read($, panel))?.lang ?? 'en', 'panel.title') })
 }
 
 export function usagePanel(on: On): void {
@@ -185,9 +185,10 @@ export function usagePanel(on: On): void {
     const chosen = await read($, period)
     const { Box, Text, Button } = $.ui.resolve(e)
     if (!data) {
+      const lang = await langOf($)
       return (
         <Box flexDirection="column">
-          <Text dimColor>{t('ru', 'panel.empty')}</Text>
+          <Text dimColor>{t(lang, 'panel.empty')}</Text>
         </Box>
       )
     }

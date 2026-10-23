@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=for-the-badge&logo=claude&logoColor=white"></a>
-  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.2" src="https://img.shields.io/badge/version-0.5.2-2ea44f?style=for-the-badge"></a>
+  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.3" src="https://img.shields.io/badge/version-0.5.3-2ea44f?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6?style=for-the-badge"></a>
 </p>
 
@@ -121,9 +121,14 @@ $CC = Get-ChildItem "$env:APPDATA\Claude\claude-code" -Directory | Sort-Object {
 
 ### Update
 
-```bash
-claude plugin marketplace update usagemax
-```
+Turn on auto-update once, and new versions install themselves. Claude Code keeps auto-update off for third-party marketplaces until you turn it on:
+
+1. Run `claude` in a terminal and type `/plugin`.
+2. Open the **Marketplaces** tab, select **usagemax**, then **Enable auto-update**.
+
+After that, Claude Code checks for a new version each time a session starts and installs it in the background. Open chats pick it up after `/reload-plugins`, new chats load it by themselves.
+
+To update by hand:
 
 ```bash
 claude plugin update usagemax@usagemax
@@ -170,7 +175,7 @@ During the first hours the rate has no data, and the line shows tokens only.
 | `tree` | Drawn by usagemax: yellow from 3% of the 5-hour window, red from 6% |
 | `rewrite` | Added to the end of the answer as code |
 
-A new mode applies from the next answer. The panel speaks English or Russian and follows Claude Code's `language` setting.
+A new mode applies from the next answer. The plugin speaks English. It switches to Russian when Claude Code's `language` setting is Russian.
 
 ## Data and privacy
 
