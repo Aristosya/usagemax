@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://aristosya.github.io/usagemax/sitemap.xml

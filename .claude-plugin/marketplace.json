@@ -1,0 +1,6 @@
+{
+  "name": "usagemax",
+  "owner": { "name": "Roman Chernogorov & Danil Martsinkovskii" },
+  "description": "usagemax: per-request and per-chat share of the Claude 5-hour and weekly limits in Claude Desktop",
+  "plugins": [{ "name": "usagemax", "source": "./" }]
+}

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>usagemax: per-chat Claude usage limits in Claude Desktop</title>
+<meta name="description" content="Claude Code plugin for Claude Desktop. See what each request and each chat used of the Claude 5-hour window and weekly limit: a line under every answer, a panel with top chats, trend, heatmap and toasts.">
+<meta name="keywords" content="Claude usage limits, Claude Code plugin, Claude Desktop, 5-hour limit, weekly limit, Claude Max, Claude Pro, token usage, usage tracker, rate limit">
+<link rel="canonical" href="https://aristosya.github.io/usagemax/">
+<meta name="theme-color" content="#1c1c1b">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="usagemax">
+<meta property="og:title" content="usagemax: which chat used your Claude limits">
+<meta property="og:description" content="Per-request and per-chat share of the Claude 5-hour window and weekly limit, inside Claude Desktop.">
+<meta property="og:url" content="https://aristosya.github.io/usagemax/">
+<meta property="og:image" content="https://aristosya.github.io/usagemax/assets/social-preview.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="usagemax: which chat used your Claude limits">
+<meta name="twitter:description" content="Per-request and per-chat share of the Claude 5-hour window and weekly limit, inside Claude Desktop.">
+<meta name="twitter:image" content="https://aristosya.github.io/usagemax/assets/social-preview.png">
+<link rel="alternate" type="text/plain" href="llms.txt" title="llms.txt">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "SoftwareApplication",
+      "name": "usagemax",
+      "applicationCategory": "DeveloperApplication",
+      "applicationSubCategory": "Claude Code plugin",
+      "operatingSystem": "Windows 11",
+      "softwareVersion": "0.5.1",
+      "license": "https://opensource.org/licenses/MIT",
+      "url": "https://aristosya.github.io/usagemax/",
+      "codeRepository": "https://github.com/Aristosya/usagemax",
+      "image": "https://aristosya.github.io/usagemax/assets/social-preview.png",
+      "screenshot": [
+        "https://aristosya.github.io/usagemax/assets/screenshots/panel.png",
+        "https://aristosya.github.io/usagemax/assets/screenshots/footer.png",
+        "https://aristosya.github.io/usagemax/assets/screenshots/button.png",
+        "https://aristosya.github.io/usagemax/assets/screenshots/toasts.png"
+      ],
+      "description": "Claude Code plugin for the Code tab of Claude Desktop. Shows what each request and each chat used of the Claude 5-hour window and weekly limit.",
+      "featureList": [
+        "Usage line under every answer: share of the 5-hour window, share of the week, tokens",
+        "Band above the prompt: this chat's share, both limits with bars and reset times, run-out warning",
+        "Panel with limits, reset times, run-out forecast, pace, 7-day trend, hour heatmap and model split",
+        "Top chats for the hour, today, yesterday, the 5-hour window or the week",
+        "Toasts at 80% and 90% of the 5-hour window, 80% of the week, and for a chat over 10% in an hour",
+        "Local data only, no network calls"
+      ],
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": [
+        { "@type": "Person", "name": "Roman Chernogorov" },
+        { "@type": "Person", "name": "Danil Martsinkovskii" }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Does usagemax count the Chat tab?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Usage from the Chat tab, the phone app and other computers shows up in the Other row of the top chats." }
+        },
+        {
+          "@type": "Question",
+          "name": "How does usagemax compute a request's share of the limit?",
+          "acceptedAnswer": { "@type": "Answer", "text": "It prices each request's tokens by Anthropic's list prices and learns one account-wide rate per window from the last 7 days of counter growth. A request's share is its cost times that rate." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does usagemax send data anywhere?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. It stores the first 120 characters of each prompt and the token counts in local files and deletes them after 30 days." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does it work with an API key?",
+          "acceptedAnswer": { "@type": "Answer", "text": "API-key sessions have no 5-hour or weekly window, so the line shows tokens only." }
+        }
+      ]
+    }
+  ]
+}
+</script>
+<style>
+  :root { --bg: #121211; --card: #1c1c1b; --line: #34332f; --text: #ecebe7; --muted: #a3a09a; --claude: #d97757; --blue: #5b8def; --green: #55b685;
+          --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif; --mono: "Cascadia Mono", Consolas, ui-monospace, monospace; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: radial-gradient(1100px 520px at 10% -10%, rgba(217, 119, 87, 0.18), transparent 60%), var(--bg); color: var(--text); font: 17px/1.6 var(--sans); }
+  main { max-width: 1040px; margin: 0 auto; padding: 0 20px 80px; }
+  img { max-width: 100%; height: auto; display: block; border-radius: 14px; }
+  header { padding: 28px 0 8px; }
+  .hero { border-radius: 18px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6); }
+  h1 { font-size: clamp(34px, 5vw, 52px); letter-spacing: -0.03em; line-height: 1.1; margin: 36px 0 12px; }
+  h1 span { color: var(--claude); }
+  h2 { font-size: 26px; letter-spacing: -0.02em; margin: 64px 0 14px; }
+  p, li { color: var(--muted); }
+  p strong, li strong { color: var(--text); }
+  code, pre { font-family: var(--mono); font-size: 14.5px; }
+  code { background: #262624; border-radius: 6px; padding: 1px 6px; color: var(--text); }
+  pre { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; overflow-x: auto; margin: 12px 0; color: var(--text); }
+  .cta { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 8px; }
+  .btn { display: inline-block; padding: 10px 18px; border-radius: 10px; text-decoration: none; font-weight: 600; }
+  .btn.primary { background: var(--claude); color: #1a1a19; }
+  .btn.ghost { border: 1px solid var(--line); color: var(--text); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+  .grid ul { padding-left: 20px; display: grid; gap: 6px; }
+  .shot { margin-top: 14px; }
+  details { border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 10px 0; background: var(--card); }
+  summary { cursor: pointer; color: var(--text); font-weight: 600; }
+  details p { margin-top: 8px; }
+  footer { border-top: 1px solid var(--line); margin-top: 72px; padding-top: 18px; font-size: 14px; color: var(--muted); }
+  footer a, p a { color: var(--text); }
+  @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } body { font-size: 16px; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img class="hero" src="assets/banner.png" alt="usagemax panel and usage line in Claude Desktop" width="1280" height="640">
+  </header>
+
+  <h1>See which chat used your <span>Claude limits</span></h1>
+  <p><strong>usagemax</strong> is a Claude Code plugin for the Code tab of Claude Desktop. It shows what each request and each chat cost you in the 5-hour window and the weekly limit.</p>
+  <div class="cta">
+    <a class="btn primary" href="#install">Install</a>
+    <a class="btn ghost" href="https://github.com/Aristosya/usagemax">Source on GitHub</a>
+  </div>
+
+  <h2>A line under every answer</h2>
+  <p><code>◑ Used: +5.2%/+0.43% 121K Tok</code>: share of the 5-hour window, share of the week, tokens sent and written. Yellow from 3% of the window, red from 6%.</p>
+  <img class="shot" src="assets/screenshots/footer.png" alt="Usage line under Claude answers in normal, yellow and red states" width="832" height="562" loading="lazy">
+
+  <h2>A panel for the whole account</h2>
+  <div class="grid">
+    <ul>
+      <li><strong>5-hour window</strong> with reset time and run-out forecast</li>
+      <li><strong>Pace</strong>: window used against time passed</li>
+      <li><strong>Limits</strong>: 5-hour and weekly</li>
+      <li><strong>Trend</strong> for 7 days and an <strong>hour heatmap</strong></li>
+      <li><strong>This chat</strong>: total, heaviest request, last 10 requests</li>
+      <li><strong>Models</strong>: Opus, Sonnet, Haiku and Fable share</li>
+      <li><strong>Top chats</strong> for the hour, today, yesterday, the 5-hour window or the week</li>
+      <li><strong>Other</strong>: Chat tab, phone and other computers</li>
+    </ul>
+    <img src="assets/screenshots/panel.png" alt="usagemax panel with limits, pace, trend, heatmap, models and top chats" width="612" height="1429" loading="lazy">
+  </div>
+
+  <h2>A band and toasts</h2>
+  <p>The band above the prompt shows this chat's share of the current 5-hour window in an orange chip that opens the panel, both limits with a bar and the time to reset, and an estimate when either limit would run out before its reset. Click the band to open the panel. Toasts fire at 80% and 90% of the window, at 80% of the week, when the window runs out before the reset, and when one chat uses over 10% of the window in an hour.</p>
+  <img class="shot" src="assets/screenshots/button.png" alt="Band above the Claude prompt with limits" width="932" height="240" loading="lazy">
+  <img class="shot" src="assets/screenshots/toasts.png" alt="usagemax toasts" width="592" height="288" loading="lazy">
+
+  <h2 id="install">Install</h2>
+  <p>Needs Claude Desktop with the Code tab and a Claude subscription with the 5-hour and weekly limits. Tested with Claude Code 2.1.304 on Windows 11.</p>
+  <pre>claude plugin marketplace add Aristosya/usagemax
+claude plugin install usagemax@usagemax --scope user</pre>
+
+  <h2>Questions</h2>
+  <details><summary>Does it count the Chat tab?</summary><p>No. Usage from the Chat tab, the phone app and other computers lands in the Other row.</p></details>
+  <details><summary>How is a request's share computed?</summary><p>usagemax prices tokens by Anthropic's list prices and learns one account-wide rate per window from the last 7 days. A request's share is its cost times that rate.</p></details>
+  <details><summary>Does it send data anywhere?</summary><p>No. Prompts (first 120 characters) and token counts stay in local files for 30 days.</p></details>
+  <details><summary>Does it work with an API key?</summary><p>API-key sessions have no 5-hour or weekly window. The line shows tokens only.</p></details>
+
+  <footer>usagemax 0.5.1 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
+</main>
+</body>
+</html>

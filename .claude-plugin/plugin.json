@@ -1,0 +1,11 @@
+{
+  "name": "usagemax",
+  "version": "0.5.1",
+  "description": "Shows how much of the Claude 5-hour and weekly usage limits each request and each chat used",
+  "author": { "name": "Roman Chernogorov & Danil Martsinkovskii" },
+  "homepage": "https://github.com/Aristosya/usagemax",
+  "repository": "https://github.com/Aristosya/usagemax",
+  "license": "MIT",
+  "keywords": ["usage", "limits", "rate-limit", "tokens", "claude-desktop", "5-hour-window", "weekly-limit"],
+  "types": "./types/index.d.ts"
+}
