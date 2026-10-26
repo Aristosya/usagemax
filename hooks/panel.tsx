@@ -1,10 +1,10 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { Forecast, ModelShare, Pace, PanelData, Period, Reading, TopRow, TurnRecord, WindowReading } from '../types'
+import type { ModelShare, Pace, PanelData, Period, Reading, TopRow, TurnRecord } from '../types'
 import { diskOf } from './lib/disk'
 import { formatPct5h, formatPctWeek, formatTok, visibleTokens } from './lib/format'
-import { type Lang, type MsgKey, formatDuration, langOf, requestsLabel, t } from './lib/i18n'
+import { type Lang, type MsgKey, langOf, requestsLabel, t } from './lib/i18n'
 import { emptySession, loadAll } from './lib/ledger'
 import { calibrate } from './lib/percent'
 import { readingFrom } from './lib/readings'
@@ -83,11 +83,6 @@ export function requestLine(x: TurnRecord, tz: number, lang: Lang): string {
   const week = x.pct.seven_day ? shareWeek(x.pct.seven_day.v) : '–'
   const tok = formatTok(visibleTokens(x.tokens) + visibleTokens(x.agents.tokens))
   return `${clock(x.endedAt, tz)}  ${five}  ${week}  ${tok} Tok  ${shownPrompt(x.prompt, lang)}`
-}
-
-function forecastLine(f: Forecast, lang: Lang, tz: number): string {
-  if (f.kind === 'runsOutAt') return t(lang, 'forecast.runsOutAt', { time: clock(f.at, tz) })
-  return t(lang, f.kind === 'lasts' ? 'forecast.lasts' : 'forecast.unknown')
 }
 
 /** A top row's share in the period's own window: `–` while that window's rate is not ready. */
@@ -230,7 +225,6 @@ export function usagePanel(on: On): void {
     const turnShare = (x: TurnRecord): string => (rate.five_hour === null ? '–' : formatPct5h(x.units * rate.five_hour))
     const topMax = Math.max(0.0001, ...rows.map(r => r[key]))
     const five = windows?.five_hour
-    const resetIn = (resetsAt: string) => t(lang, 'reset.in', { time: formatDuration(Date.parse(resetsAt) - data.at, lang) })
 
     // The desktop draws no Svg here and sizes boxes its own way: bars are coloured line characters.
     const Bar = (pct: number, color: string, width = BAR_WIDTH, rest?: string) => {
@@ -281,16 +275,6 @@ export function usagePanel(on: On): void {
         </Text>
       </Box>
     )
-    const Limit = (label: string, r: WindowReading | undefined, color: string) =>
-      r && (
-        <Box flexDirection="column" marginTop={1}>
-          {Row(<Text>{label}</Text>, <Text mono tabular>{t(lang, 'panel.left', { pct: Math.max(0, 100 - r.pct) })}</Text>)}
-          {Bar(r.pct, color)}
-          <Text size="caption" dimColor>
-            {resetIn(r.resetsAt)}
-          </Text>
-        </Box>
-      )
 
     return (
       <Box flexDirection="column" gap={1}>
@@ -308,26 +292,8 @@ export function usagePanel(on: On): void {
           </Text>
         )}
 
-        <Box flexDirection="column">
-          {Cap(t(lang, 'window.5h'))}
-          {five ? (
-            <Box flexDirection="column">
-              <Text size="title" weight="bold" mono tabular>{`${five.pct}%`}</Text>
-              <Text dimColor>{`${resetIn(five.resetsAt)} · ${forecastLine(data.forecast, lang, tz)}`}</Text>
-            </Box>
-          ) : (
-            <Text dimColor>{t(lang, 'panel.empty')}</Text>
-          )}
-        </Box>
-
         {data.pace && PaceBlock('panel.pace5h', data.pace)}
         {data.weekPace && PaceBlock('panel.paceWeek', data.weekPace)}
-
-        <Box flexDirection="column">
-          {Cap(t(lang, 'panel.windows'))}
-          {Limit(t(lang, 'window.5h'), five, COLOR_5H)}
-          {Limit(t(lang, 'window.week'), windows?.seven_day, COLOR_WEEK)}
-        </Box>
 
         <Box flexDirection="column">
           {Row(
