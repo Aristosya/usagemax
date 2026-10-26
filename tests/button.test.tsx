@@ -169,6 +169,18 @@ test('counts the time to reset down every minute', async ($, on) => {
   expect(text(await band($), '2 ч 58 мин')?.text).toBe('2 ч 58 мин')
 })
 
+test('lights the whole band up while the pointer is over it', async ($, on) => {
+  await afterOneTurn($, on)
+  const ui = await $.ui.mount(BAND())
+  const root = async () => walk(await ui.drawn({ in: CLIENT })).find(x => x.type === 'Box')
+  expect((await root())?.props.backgroundColor).toBeUndefined()
+  await ui.pointer({ type: 'enter', x: 10, y: 0, in: CLIENT })
+  expect((await root())?.props.backgroundColor).toBe('#2c2c2c')
+  await ui.pointer({ type: 'leave', x: 10, y: 0, in: CLIENT })
+  expect((await root())?.props.backgroundColor).toBeUndefined()
+  await ui.unmount()
+})
+
 test('opens the panel on a click anywhere in the band', async ($, on) => {
   const k = await afterOneTurn($, on)
   const ui = await $.ui.mount(BAND())

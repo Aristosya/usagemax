@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=for-the-badge&logo=claude&logoColor=white"></a>
-  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.5" src="https://img.shields.io/badge/version-0.5.5-2ea44f?style=for-the-badge"></a>
+  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.6" src="https://img.shields.io/badge/version-0.5.6-2ea44f?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6?style=for-the-badge"></a>
 </p>
 
@@ -41,7 +41,7 @@
 
 <img src="assets/screenshots/button.png" alt="Band above the Claude prompt: this chat's share, 5-hour window and week with bars and reset times, run-out warning" width="760">
 
-The orange chip shows this chat's share of the current 5-hour window. Next to it: the 5-hour window and the week, each with a bar, the percent used and the time to reset. When a limit's recent pace would use it up before its reset, a yellow estimate follows it: `▲ runs out ≈16:02`. The 5-hour estimate needs 15 of the last 30 minutes, the weekly one 6 of the last 24 hours, so a fresh window shows no estimate. In a narrow window the band stays on one row: it shortens the estimates, then drops the times to reset, then the bars. Click the band to open the panel. The band shows up as soon as a chat sends its first request.
+The orange chip shows this chat's share of the current 5-hour window. Next to it: the 5-hour window and the week, each with a bar, the percent used and the time to reset. When a limit's recent pace would use it up before its reset, a yellow estimate follows it: `▲ runs out ≈16:02`. The 5-hour estimate needs 15 of the last 30 minutes, the weekly one 6 of the last 24 hours, so a fresh window shows no estimate. In a narrow window the band stays on one row: it shortens the estimates, then drops the times to reset, then the bars. The band lights up under the pointer; click anywhere on it to open the panel. The band shows up as soon as a chat sends its first request.
 
 Claude reports the limits only with an answer, so the band refreshes itself every minute: the time to reset counts down, and an answer in another Code chat on this computer shows up here within a minute. Usage from the Chat tab, the phone or another computer appears after the next answer in any Code chat.
 

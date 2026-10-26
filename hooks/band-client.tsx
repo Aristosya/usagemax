@@ -5,15 +5,21 @@ import type { BandView } from '../types'
 /**
  * The band above the prompt, drawn by a surface module so that a click anywhere on it can open the
  * panel: the desktop draws a Button from its label alone, so no Button could carry the bars and colours.
- * A left click posts `{ open: true }`; the hooks module opens the panel on it.
+ * A left click posts `{ open: true }`; the hooks module opens the panel on it. While the pointer is over
+ * the band its background lights up, so it reads as one control (the pointer's shape is the desktop's to choose).
  */
-const Band: ClientModule<BandView> = (v, surface) => {
+const HOVER_BACKGROUND = '#2c2c2c'
+
+const Band: ClientModule<BandView, { hover: boolean }> = (v, surface) => {
   const { Box, Text } = surface.elements
+  const hover = surface.state?.hover === true
   surface.onPointer(e => {
+    if (e.type === 'enter' && !hover) surface.setState({ hover: true })
+    if (e.type === 'leave' && hover) surface.setState({ hover: false })
     if (e.type === 'up' && (e.button === undefined || e.button === 'left')) surface.post({ open: true })
   })
   return (
-    <Box flexDirection="row" alignItems="center" flexWrap="nowrap" overflow="hidden" columnGap={2}>
+    <Box flexDirection="row" alignItems="center" flexWrap="nowrap" overflow="hidden" columnGap={2} {...(hover ? { backgroundColor: HOVER_BACKGROUND } : {})}>
       <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0} borderStyle="round" borderColor="claude" paddingX="xs">
         <Text color="claude">{v.ring}</Text>
         <Text color="text" bold mono tabular>
