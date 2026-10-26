@@ -3,14 +3,16 @@ import type { EngineInterface, On } from 'claude-code'
 
 import type { BandLimit, BandView, ButtonState, Rate, Reading, SessionFile, WindowReading } from '../types'
 import { ringGlyph } from './footer'
+import { bandModuleUsable, saveBandFault } from './lib/bandfault'
+import { diskOf } from './lib/disk'
 import { formatPct5h } from './lib/format'
 import { type Lang, type MsgKey, formatDuration, langOf, t } from './lib/i18n'
 import { forecast, sessionSummary, weekForecast } from './lib/report'
 import { clock, openPanel } from './panel'
 
 const button = atom({ plugin: 'usagemax', key: 'button' } as const, { ring: null, sessionPct: null } as ButtonState)
-/** Set when the band's surface module failed: the band is drawn as Text from then on. */
-const bandFailed = atom({ plugin: 'usagemax', key: 'bandFailed' } as const, false)
+/** When the band's surface module last failed: the band is drawn as Text for a minute after it. */
+const bandFailedAt = atom({ plugin: 'usagemax', key: 'bandFailedAt' } as const, null as number | null)
 
 /** The theme's accent: the chip's border and ring, the 5-hour bar. */
 const ACCENT = 'claude'
@@ -127,7 +129,7 @@ export function usageButton(on: On): void {
     const view = bandView(b, now, tz, e.props.bodyColumns)
     const els = $.ui.resolve(e)
     const { Box, Text, Button } = els
-    if ('Client' in els && !(await read($, bandFailed))) {
+    if ('Client' in els && bandModuleUsable(await read($, bandFailedAt), now)) {
       const { Client } = els
       return <Client key={BAND_KEY} module="./band-client.tsx" props={view} flexGrow={1} />
     }
@@ -166,9 +168,14 @@ export function usageButton(on: On): void {
     return next(e)
   })
 
-  // The engine draws the band again after a fault; this time as Text, so it is not left empty.
+  // The engine draws the band again after a fault; for a minute as Text, so it is not left empty, then the
+  // module gets another try. The reason goes to band-fault.json.
   on('ui.fault', async ($, e, next) => {
-    if (e.element === BAND_KEY) await update($, bandFailed, () => true)
+    if (e.element === BAND_KEY) {
+      const at = await $.clock.now()
+      await update($, bandFailedAt, () => at)
+      await saveBandFault(diskOf($), { at, phase: e.phase, reason: e.reason })
+    }
     return next(e)
   })
 }

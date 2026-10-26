@@ -131,7 +131,7 @@ declare module 'claude-code' {
       footers: FooterEntry[]
       footerMode: FooterMode
       button: ButtonState
-      bandFailed: boolean
+      bandFailedAt: number | null
       panel: PanelData | null
       period: Period
     }
