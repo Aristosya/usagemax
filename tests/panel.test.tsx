@@ -74,6 +74,7 @@ test('lays out the window, limits, this chat, the top and last requests in order
   expect(all).toContain('26%')
   expect(all).toContain('74% осталось')
   expect(all).toContain('2 запроса')
+  expect(all.some(x => /^(\d+\.\d%|<0\.1%|–) от 5-часового лимита$/.test(x))).toBe(true)
   expect(all.some(x => /^━+$/.test(x))).toBe(true)
   expect(all.some(x => x.includes('rewrite the login flow'))).toBe(true)
 })
