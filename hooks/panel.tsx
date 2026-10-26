@@ -4,7 +4,7 @@ import type { EngineInterface, On } from 'claude-code'
 import type { ModelShare, Pace, PanelData, Period, Reading, TopRow, TurnRecord } from '../types'
 import { diskOf } from './lib/disk'
 import { formatPct5h, formatPctWeek, formatTok, visibleTokens } from './lib/format'
-import { type Lang, type MsgKey, langOf, requestsLabel, t } from './lib/i18n'
+import { type Lang, type MsgKey, formatDuration, langOf, requestsLabel, t } from './lib/i18n'
 import { emptySession, loadAll } from './lib/ledger'
 import { calibrate } from './lib/percent'
 import { readingFrom } from './lib/readings'
@@ -256,9 +256,14 @@ export function usagePanel(on: On): void {
       </Text>
     )
     /** One limit's pace: used in orange and what is left in green, then the time that passed. */
-    const PaceBlock = (title: MsgKey, pace: Pace) => (
+    const PaceBlock = (title: MsgKey, pace: Pace, resetsAt: string | undefined) => (
       <Box flexDirection="column">
         {Cap(t(lang, title))}
+        {resetsAt !== undefined && (
+          <Text size="caption" dimColor>
+            {t(lang, 'reset.in', { time: formatDuration(Date.parse(resetsAt) - data.at, lang) })}
+          </Text>
+        )}
         {Row(
           <Text>{t(lang, 'pace.used')}</Text>,
           <Box flexDirection="row" gap={1}>
@@ -292,8 +297,8 @@ export function usagePanel(on: On): void {
           </Text>
         )}
 
-        {data.pace && PaceBlock('panel.pace5h', data.pace)}
-        {data.weekPace && PaceBlock('panel.paceWeek', data.weekPace)}
+        {data.pace && PaceBlock('panel.pace5h', data.pace, five?.resetsAt)}
+        {data.weekPace && PaceBlock('panel.paceWeek', data.weekPace, windows?.seven_day?.resetsAt)}
 
         <Box flexDirection="column">
           {Row(
