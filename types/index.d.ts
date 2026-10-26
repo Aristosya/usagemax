@@ -39,6 +39,8 @@ export type SessionFile = {
   /** Which turn started each background agent, by agent id. */
   agentTurns: Record<string, string>
   turns: TurnRecord[]
+  /** The Claude account the chat runs under; absent in files recorded before accounts. */
+  account?: string
 }
 
 /** Percent of a window per cost unit; null until enough solo turns were seen. */
@@ -103,6 +105,10 @@ export type PanelData = {
   /** Cost per local hour: 7 rows of 24, oldest day first. */
   heat: number[][]
   models: Record<Period, ModelShare[]>
+  /** The account's email, when the login names one. */
+  account: string | null
+  /** When this account last reset its statistics. */
+  since: number | null
 }
 
 /** What the band above the prompt draws; the windows, forecast and language arrive with the first write. */
@@ -134,6 +140,7 @@ declare module 'claude-code' {
       bandFailedAt: number | null
       panel: PanelData | null
       period: Period
+      resetArmed: boolean
     }
   }
 }

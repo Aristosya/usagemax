@@ -11,6 +11,8 @@ import { readingFrom } from './lib/readings'
 import { resolveTitle } from './lib/title'
 import { forecast, periodBounds, sessionSummary, shareKey, topChats } from './lib/report'
 import { VERSION } from './lib/version'
+import { sinceReset } from './lib/account'
+import { ofScope, resetScope, scopeOf } from './scope'
 import { NBSP, axisCells, dailyCost, heatLevel, hourlyGrid, modelBar, modelName, modelSplit, paceOf, trendGlyph } from './lib/visuals'
 
 export const PANE_ID = 'usagemax'
@@ -54,6 +56,8 @@ const LOOKBACK_MS = 8 * 86_400_000
 
 const panel = atom({ plugin: 'usagemax', key: 'panel' } as const, null as PanelData | null)
 const period = atom({ plugin: 'usagemax', key: 'period' } as const, 'today' as Period)
+/** The reset button's first press: the second one resets. */
+const resetArmed = atom({ plugin: 'usagemax', key: 'resetArmed' } as const, false)
 
 const share5 = (v: number): string => formatPct5h(v).replace('+', '')
 const shareWeek = (v: number): string => formatPctWeek(v).replace('+', '')
@@ -113,8 +117,10 @@ function looksBroken(title: string): boolean {
 export async function computePanel($: EngineInterface): Promise<PanelData> {
   const now = await $.clock.now()
   const sessionId = await $.session.id()
-  const files = await loadAll(diskOf($), { since: now - LOOKBACK_MS })
-  for (const f of files) {
+  const scope = await scopeOf($)
+  // This account's chats: every request for the rate and the limits, only those after a reset on show.
+  const all = ofScope(await loadAll(diskOf($), { since: now - LOOKBACK_MS }), scope)
+  for (const f of all) {
     if (f.sessionId === sessionId || !looksBroken(f.title)) continue
     let title = healed.get(f.sessionId)
     if (title === undefined) {
@@ -123,10 +129,11 @@ export async function computePanel($: EngineInterface): Promise<PanelData> {
     }
     f.title = title
   }
+  const files = all.map(f => sinceReset(f, scope.resetAt))
   const own = files.find(f => f.sessionId === sessionId) ?? emptySession(sessionId, await $.session.cwd(), now)
   // `$.session.usage()` answers this chat's last response; another chat may have read the windows later.
   const ownReading = readingFrom(await $.session.usage(), now)
-  const latest = files
+  const latest = all
     .flatMap(f => f.turns.map(x => x.readings.after))
     .filter((r): r is Reading => r !== null && r.at <= now && r.five_hour !== undefined)
     .sort((a, b) => b.at - a.at)[0]
@@ -136,16 +143,18 @@ export async function computePanel($: EngineInterface): Promise<PanelData> {
   const other = t(lang, 'other.title')
   const top = {} as Record<Period, TopRow[]>
   // One account rate for every chat: the shares chats saved for themselves are not trusted.
-  const rate = calibrate(files.flatMap(f => f.turns), now)
+  const rate = calibrate(all.flatMap(f => f.turns), now)
   const models = {} as Record<Period, ModelShare[]>
   for (const p of PERIODS) {
-    const bounds = periodBounds(p, now, tz, current)
+    const period = periodBounds(p, now, tz, current)
+    // After a reset a period starts there: the usage before it must not resurface as «Other».
+    const bounds = scope.resetAt !== null && period.from < scope.resetAt ? { ...period, from: scope.resetAt } : period
     top[p] = topChats(files, p, bounds, other, rate)
     models[p] = modelSplit(files, bounds)
   }
   const days = dailyCost(files, now, tz)
   const maxDay = Math.max(0, ...days.map(d => d.units))
-  const readings = files.flatMap(f => f.turns.flatMap(x => [x.readings.before, x.readings.after])).filter((r): r is Reading => r !== null)
+  const readings = all.flatMap(f => f.turns.flatMap(x => [x.readings.before, x.readings.after])).filter((r): r is Reading => r !== null)
   const data: PanelData = {
     lang,
     title: own.title,
@@ -160,8 +169,23 @@ export async function computePanel($: EngineInterface): Promise<PanelData> {
     trend: { days, peakWeek: rate.seven_day === null || maxDay === 0 ? null : maxDay * rate.seven_day },
     heat: hourlyGrid(files, now, tz),
     models,
+    account: scope.email,
+    since: scope.resetAt,
   }
   return data
+}
+
+/** `26.10 06:30` in the viewer's zone: when the statistics start after a reset. */
+function stamp(at: number, tz: number): string {
+  const d = new Date(at + tz * 60_000)
+  return `${pad(d.getUTCDate())}.${pad(d.getUTCMonth() + 1)} ${clock(at, tz)}`
+}
+
+/** The reset's second press: this account's statistics start over now; the rate is kept. */
+export async function confirmReset($: EngineInterface): Promise<void> {
+  await resetScope($, await $.clock.now())
+  await update($, resetArmed, () => false)
+  await refreshPanel($)
 }
 
 /** Recomputes the panel; called on open and after each turn once it was opened. */
@@ -183,6 +207,7 @@ export function usagePanel(on: On): void {
   on('ui.render', { component: 'Pane', requestId: PANE_ID }, async ($, e) => {
     const data = await read($, panel)
     const chosen = await read($, period)
+    const armed = await read($, resetArmed)
     const { Box, Text, Button } = $.ui.resolve(e)
     if (!data) {
       const lang = await langOf($)
@@ -252,6 +277,11 @@ export function usagePanel(on: On): void {
               <Button key={`period-${p}`} label={t(lang, PERIOD_KEY[p])} variant={p === chosen ? 'primary' : 'secondary'} onPress={() => update($, period, () => p)} />
             ))}
           </Box>,
+        )}
+        {(data.account !== null || data.since !== null) && (
+          <Text size="caption" dimColor>
+            {[data.account, data.since === null ? null : t(lang, 'panel.since', { time: stamp(data.since, tz) })].filter(x => x !== null).join(' · ')}
+          </Text>
         )}
 
         <Box flexDirection="column">
@@ -410,7 +440,17 @@ export function usagePanel(on: On): void {
           </Box>
         )}
 
-        <Text size="caption" dimColor>{`usagemax ${VERSION}`}</Text>
+        <Box flexDirection="row" justifyContent="space-between" alignItems="center" gap={1}>
+          <Text size="caption" dimColor>{`usagemax ${VERSION}`}</Text>
+          {armed ? (
+            <Box flexDirection="row" gap={1}>
+              <Button key="usagemax-reset-confirm" label={t(lang, 'panel.resetConfirm')} variant="primary" onPress={() => confirmReset($)} />
+              <Button key="usagemax-reset-cancel" label={t(lang, 'panel.resetCancel')} onPress={() => update($, resetArmed, () => false)} />
+            </Box>
+          ) : (
+            <Button key="usagemax-reset" label={t(lang, 'panel.reset')} onPress={() => update($, resetArmed, () => true)} />
+          )}
+        </Box>
       </Box>
     )
   })

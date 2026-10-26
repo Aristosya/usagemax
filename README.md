@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=for-the-badge&logo=claude&logoColor=white"></a>
-  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.6" src="https://img.shields.io/badge/version-0.5.6-2ea44f?style=for-the-badge"></a>
+  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.7" src="https://img.shields.io/badge/version-0.5.7-2ea44f?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6?style=for-the-badge"></a>
 </p>
 
@@ -72,6 +72,8 @@ With `"footer": "tree"` the line turns yellow from 3% of the window and red from
 - **Models**: share of Opus, Sonnet, Haiku and Fable for the period
 - **Top chats** for the hour, today, yesterday, the 5-hour window or the week
 - **Other** row: usage no Code-tab chat explains (Chat tab, phone, another computer)
+- **Your account**: the signed-in email under the title. Each Claude account sees only its own chats
+- **Reset statistics** at the bottom: press it twice and this account's numbers start over. The rate stays, so shares stay accurate
 
 <br clear="right">
 
@@ -191,9 +193,12 @@ A new mode applies from the next answer. The plugin speaks English. It switches 
 | --- | --- |
 | `%USERPROFILE%\.claude\usagemax\sessions\<chat id>.json` | One chat's requests: time, first 120 characters of the prompt, tokens, limit readings, share |
 | `%USERPROFILE%\.claude\usagemax\settings.json` | Settings |
+| `%USERPROFILE%\.claude\usagemax\accounts.json` | When each account last reset its statistics, and which account owns the chats recorded before 0.5.7 |
+| `%USERPROFILE%\.claude\usagemax\band-fault.json` | The last error of the band above the prompt, if it had one |
 
 - Each chat writes its own file. Records older than 30 days go away when a chat starts.
 - Chat titles come from Claude Code's local transcripts.
+- usagemax reads the signed-in account from Claude Code's `.claude.json` and tags each chat file with it.
 - The one network call is that update check: `git fetch` of this repository, at most once an hour, only when you installed from GitHub. It sends nothing about you or your usage. `"selfUpdate": false` turns it off.
 
 ## FAQ
@@ -208,6 +213,12 @@ No. Usage from the Chat tab, the phone app and other computers shows up in the <
 <summary><b>Why does the line show <code>–</code> or tokens only?</b></summary>
 
 The account rate needs a few hours of requests. Until then usagemax shows tokens, and <code>–</code> where a share is unknown.
+</details>
+
+<details>
+<summary><b>I switch between two Claude accounts. Do their numbers mix?</b></summary>
+
+No. Each chat file carries the account it ran under, and the panel, the band and the commands show only the signed-in account. Chats recorded before 0.5.7 go to the first account usagemax sees after the update.
 </details>
 
 <details>

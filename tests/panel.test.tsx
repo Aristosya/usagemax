@@ -97,7 +97,7 @@ test('names its build at the bottom', async ($, on) => {
   const k = kit(on)
   await twoTurns($, k)
   await openViaButton($)
-  expect((await texts($)).at(-1)).toBe('usagemax 0.5.6')
+  expect((await texts($)).at(-1)).toBe('usagemax 0.5.7')
 })
 
 test('places pace, trend, activity and models in their order', async ($, on) => {
@@ -164,7 +164,7 @@ test('draws the period switch as one row of buttons', async ($, on) => {
   await twoTurns($, k)
   await openViaButton($)
   const ui = await $.ui.mount(PANE)
-  const buttons = await ui.findAll({ type: 'Button' })
+  const buttons = (await ui.findAll({ type: 'Button' })).filter(b => String(b.props.key ?? '').startsWith('period-'))
   expect(buttons.map(b => b.props.label)).toEqual(['Час', 'Сегодня', 'Вчера', 'Окно 5 ч', 'Неделя'])
   expect(buttons.find(b => b.props.label === 'Сегодня')?.props.variant).toBe('primary')
   await ui.unmount()

@@ -32,7 +32,7 @@
       "applicationCategory": "DeveloperApplication",
       "applicationSubCategory": "Claude Code plugin",
       "operatingSystem": "Windows 11",
-      "softwareVersion": "0.5.6",
+      "softwareVersion": "0.5.7",
       "license": "https://opensource.org/licenses/MIT",
       "url": "https://aristosya.github.io/usagemax/",
       "codeRepository": "https://github.com/Aristosya/usagemax",
@@ -75,6 +75,11 @@
           "@type": "Question",
           "name": "Does usagemax send data anywhere?",
           "acceptedAnswer": { "@type": "Answer", "text": "No. It stores the first 120 characters of each prompt and the token counts in local files and deletes them after 30 days." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does usagemax mix the statistics of two Claude accounts?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Each chat file records the account it ran under, and the panel, the band and the commands show only the signed-in account." }
         },
         {
           "@type": "Question",
@@ -146,6 +151,8 @@
       <li><strong>Models</strong>: Opus, Sonnet, Haiku and Fable share</li>
       <li><strong>Top chats</strong> for the hour, today, yesterday, the 5-hour window or the week</li>
       <li><strong>Other</strong>: Chat tab, phone and other computers</li>
+      <li><strong>Your account</strong>: each Claude account sees only its own chats</li>
+      <li><strong>Reset statistics</strong>: two presses start this account's numbers over</li>
     </ul>
     <img src="assets/screenshots/panel.png" alt="usagemax panel with limits, pace, trend, heatmap, models and top chats" width="612" height="1429" loading="lazy">
   </div>
@@ -164,9 +171,10 @@ claude plugin install usagemax@usagemax --scope user</pre>
   <details><summary>Does it count the Chat tab?</summary><p>No. Usage from the Chat tab, the phone app and other computers lands in the Other row.</p></details>
   <details><summary>How is a request's share computed?</summary><p>usagemax prices tokens by Anthropic's list prices and learns one account-wide rate per window from the last 7 days. A request's share is its cost times that rate.</p></details>
   <details><summary>Does it send data anywhere?</summary><p>No. Prompts (first 120 characters) and token counts stay in local files for 30 days.</p></details>
+  <details><summary>Do two Claude accounts mix?</summary><p>No. Each chat records its account, and the panel shows only the signed-in one.</p></details>
   <details><summary>Does it work with an API key?</summary><p>API-key sessions have no 5-hour or weekly window. The line shows tokens only.</p></details>
 
-  <footer>usagemax 0.5.6 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
+  <footer>usagemax 0.5.7 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
 </main>
 </body>
 </html>
