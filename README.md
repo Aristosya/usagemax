@@ -13,8 +13,6 @@
   <img alt="Tested with Claude Code 2.1.304" src="https://img.shields.io/badge/Claude%20Code-2.1.304-1c1c1b?logo=anthropic&logoColor=white">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white">
   <img alt="Windows 11" src="https://img.shields.io/badge/Windows-11-0078D4?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCc+PHBhdGggZmlsbD0nd2hpdGUnIGQ9J00wIDBoMTF2MTFIMHpNMTMgMGgxMXYxMUgxM3pNMCAxM2gxMXYxMUgwek0xMyAxM2gxMXYxMUgxM3onLz48L3N2Zz4=">
-  <img alt="127 test cases" src="https://img.shields.io/badge/tests-127%20cases-55b685">
-  <img alt="Network: update check only" src="https://img.shields.io/badge/network-update%20check%20only-55b685">
   <img alt="English and Russian" src="https://img.shields.io/badge/UI-EN%20%7C%20RU-8d8a84">
 </p>
 
