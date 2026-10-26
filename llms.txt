@@ -6,7 +6,7 @@ usagemax runs inside Claude Code as a function-hook mod. It records each request
 
 ## Features
 
-- Line under each answer: `◑ Used: +5.2%/+0.43% 121K Tok` (share of the 5-hour window, share of the week, tokens sent and written). Optional colours: yellow from 3% of the window, red from 6%.
+- Line under each answer: `◑ Used: +5.2%/+0.43% 121K Tok · 2.4M cached` (share of the 5-hour window, share of the week, tokens sent and written, tokens read from the prompt cache). A share never exceeds the counter's growth during the request plus one point. Optional colours: yellow from 3% of the window, red from 6%.
 - Band above the prompt: an orange chip with this chat's share of the current 5-hour window, the 5-hour window and the week with bars, percent and time to reset, and an estimate when either limit would run out before its reset at the recent pace. Clicking the band opens the panel. It refreshes every minute from every Code chat's newest reading.
 - Panel: 5-hour window with reset time and run-out forecast, pace, 5-hour and weekly limits, 7-day trend, hour-by-day heatmap, this chat's total and heaviest request, model split, top chats for the hour, today, yesterday, the 5-hour window or the week, an Other row for the Chat tab and other devices, the signed-in account's email, and a Reset statistics button (two presses; the rate stays).
 - Toasts: 5-hour window at 80% and 90%, weekly limit at 80%, window runs out before the reset, one chat over 10% of the window in an hour.
@@ -24,7 +24,7 @@ claude plugin install usagemax@usagemax --scope user
 - Platform: Claude Desktop, Code tab. Tested with Claude Code 2.1.304 on Windows 11.
 - Needs a Claude subscription with the 5-hour and weekly limits, such as Pro or Max. API-key sessions get tokens only.
 - Storage: `%USERPROFILE%\.claude\usagemax\sessions\<chat id>.json`, 30-day retention, first 120 characters of each prompt.
-- Accounts: each chat file records the Claude account it ran under, read from Claude Code's `.claude.json`. The panel, the band and the commands show only the signed-in account. `accounts.json` keeps each account's last reset.
+- Accounts: each request records the Claude account it ran under, from the chat's environment (`CLAUDE_CODE_ACCOUNT_UUID`, set by Claude Desktop) or Claude Code's `.claude.json`. Each account learns its own rate. The panel, the band and the commands show only the signed-in account. `accounts.json` keeps each account's last reset.
 - Network: one `git fetch` of this repository at most once an hour when installed from GitHub, so Claude Code's Update button finds new versions; `"selfUpdate": false` in settings.json turns it off. No usage data leaves the computer.
 - Interface language: English; Russian when Claude Code's `language` setting is Russian.
 - Updates: turn on auto-update for the usagemax marketplace in `/plugin` → Marketplaces, or run `claude plugin update usagemax@usagemax`.

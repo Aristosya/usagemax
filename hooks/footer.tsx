@@ -27,7 +27,7 @@ export function footerView(t: TurnRecord): FooterView {
   const pct5h = t.pct.five_hour?.v ?? null
   const tok = visibleTokens(t.tokens) + visibleTokens(t.agents.tokens)
   return {
-    text: footerText({ pct5h, pctWeek: t.pct.seven_day?.v ?? null, tok }),
+    text: footerText({ pct5h, pctWeek: t.pct.seven_day?.v ?? null, tok, cached: t.tokens.cacheRead + t.agents.tokens.cacheRead }),
     ring: t.readings.after?.five_hour?.pct ?? null,
     severity: severity(pct5h),
   }

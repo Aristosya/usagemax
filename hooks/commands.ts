@@ -4,9 +4,12 @@ import type { Period, TopRow, TurnRecord } from '../types'
 import { diskOf } from './lib/disk'
 import { type Lang, langOf, t } from './lib/i18n'
 import { sinceReset } from './lib/account'
-import { loadOwn } from './lib/ledger'
+import { loadAll, loadOwn } from './lib/ledger'
 import { PERIOD_KEY, computePanel, openPanel, requestLine, rowLines } from './panel'
-import { scopeOf } from './scope'
+import { scopeOf, splitScope } from './scope'
+
+/** Chats read to tell whose this chat's earlier requests are. */
+const HISTORY_MS = 7 * 86_400_000
 
 const ARG_PERIOD: Readonly<Record<string, Period>> = { hour: 'hour', today: 'today', yesterday: 'yesterday', '5h': 'window5h', week: 'week' }
 
@@ -36,7 +39,10 @@ async function topReport($: EngineInterface, p: Period): Promise<string> {
 
 async function chatReport($: EngineInterface): Promise<string> {
   const now = await $.clock.now()
-  const own = sinceReset(await loadOwn(diskOf($), await $.session.id(), await $.session.cwd(), now), (await scopeOf($)).resetAt)
+  const d = diskOf($)
+  const file = await loadOwn(d, await $.session.id(), await $.session.cwd(), now)
+  const scope = await scopeOf($)
+  const own = sinceReset(splitScope(file, await loadAll(d, { since: now - HISTORY_MS, exclude: file.sessionId }), scope).own, scope.resetAt)
   return chatText(own.turns, await langOf($), -new Date(now).getTimezoneOffset())
 }
 

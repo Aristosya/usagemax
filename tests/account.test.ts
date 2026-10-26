@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { belongsTo, loadBook, readAccount, saveBook, sinceReset, stampLegacy } from '../hooks/lib/account'
+import { accountsOf, loadBook, readAccount, saveBook, sinceReset, stampLegacy } from '../hooks/lib/account'
 import { session, turn } from './factory'
 import { HOME, memDisk } from './memdisk'
 
@@ -25,12 +25,21 @@ test('gives the files recorded before accounts to the first account seen, once',
   expect(stampLegacy(book, 'acc-b').legacy).toBe('acc-a')
 })
 
-test("keeps each account's chats to itself", () => {
-  const mine = { ...session({ sessionId: 'm' }), account: 'acc-a' }
-  const theirs = { ...session({ sessionId: 't' }), account: 'acc-b' }
-  const old = session({ sessionId: 'o' })
-  expect([mine, theirs, old].filter(f => belongsTo(f, 'acc-a', 'acc-a')).map(f => f.sessionId)).toEqual(['m', 'o'])
-  expect([mine, theirs, old].filter(f => belongsTo(f, 'acc-b', 'acc-a')).map(f => f.sessionId)).toEqual(['t'])
+test('names the account of each request: its mark, else the account that saw the same week, else the legacy one', () => {
+  const OLD = '2026-10-28T03:00:00.000Z'
+  const NEW = '2026-10-27T14:00:00.000Z'
+  const saw = (id: string, resetsAt: string, account?: string) =>
+    turn({ turnId: id, ...(account === undefined ? {} : { account }), readings: { before: null, after: { at: 1, seven_day: { pct: 1, resetsAt } } } })
+  // One chat that moved from acc-a to acc-b: the requests before the marks follow the week they saw.
+  const moved = session({ sessionId: 'm', turns: [saw('old-a', OLD), saw('old-b', NEW), saw('new-b', NEW, 'acc-b'), turn({ turnId: 'blind' })] })
+  const owner = accountsOf([moved], 'acc-a')
+  expect(moved.turns.map(owner)).toEqual(['acc-a', 'acc-b', 'acc-b', 'acc-a'])
+})
+
+test('before its first marked request, the signed-in account claims the week of the newest reading', () => {
+  const saw = (id: string, at: number, resetsAt: string) => turn({ turnId: id, endedAt: at, readings: { before: null, after: { at, seven_day: { pct: 1, resetsAt } } } })
+  const file = session({ turns: [saw('old', 1, '2026-10-28T03:00:00.000Z'), saw('newest', 2, '2026-10-27T14:00:00.000Z')] })
+  expect(file.turns.map(accountsOf([file], 'acc-a', 'acc-b'))).toEqual(['acc-a', 'acc-b'])
 })
 
 test('shows only the requests after a reset', () => {

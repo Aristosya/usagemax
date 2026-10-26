@@ -32,7 +32,7 @@
       "applicationCategory": "DeveloperApplication",
       "applicationSubCategory": "Claude Code plugin",
       "operatingSystem": "Windows 11",
-      "softwareVersion": "0.5.7",
+      "softwareVersion": "0.5.8",
       "license": "https://opensource.org/licenses/MIT",
       "url": "https://aristosya.github.io/usagemax/",
       "codeRepository": "https://github.com/Aristosya/usagemax",
@@ -79,7 +79,7 @@
         {
           "@type": "Question",
           "name": "Does usagemax mix the statistics of two Claude accounts?",
-          "acceptedAnswer": { "@type": "Answer", "text": "No. Each chat file records the account it ran under, and the panel, the band and the commands show only the signed-in account." }
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Each request records the account it ran under, and the panel, the band and the commands show only the signed-in account." }
         },
         {
           "@type": "Question",
@@ -137,7 +137,7 @@
   </div>
 
   <h2>A line under every answer</h2>
-  <p><code>◑ Used: +5.2%/+0.43% 121K Tok</code>: share of the 5-hour window, share of the week, tokens sent and written. Yellow from 3% of the window, red from 6%.</p>
+  <p><code>◑ Used: +5.2%/+0.43% 121K Tok · 2.4M cached</code>: share of the 5-hour window, share of the week, tokens sent and written, tokens read from the prompt cache. Yellow from 3% of the window, red from 6%.</p>
   <img class="shot" src="assets/screenshots/footer.png" alt="Usage line under Claude answers in normal, yellow and red states" width="832" height="562" loading="lazy">
 
   <h2>A panel for the whole account</h2>
@@ -174,7 +174,7 @@ claude plugin install usagemax@usagemax --scope user</pre>
   <details><summary>Do two Claude accounts mix?</summary><p>No. Each chat records its account, and the panel shows only the signed-in one.</p></details>
   <details><summary>Does it work with an API key?</summary><p>API-key sessions have no 5-hour or weekly window. The line shows tokens only.</p></details>
 
-  <footer>usagemax 0.5.7 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
+  <footer>usagemax 0.5.8 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
 </main>
 </body>
 </html>

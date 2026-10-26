@@ -26,8 +26,8 @@ test('builds the view from a saved turn, agents included', () => {
       pct: { five_hour: { v: 3.4, mode: 'estimate' }, seven_day: { v: 0.21, mode: 'estimate' } },
     }),
   )
-  expect(view).toEqual({ text: 'Used: +3.4%/+0.21% 10K Tok', ring: 30, severity: 'warn' })
-  expect(footerLine(view)).toBe('◔ Used: +3.4%/+0.21% 10K Tok')
+  expect(view).toEqual({ text: 'Used: +3.4%/+0.21% 10K Tok · 100K cached', ring: 30, severity: 'warn' })
+  expect(footerLine(view)).toBe('◔ Used: +3.4%/+0.21% 10K Tok · 100K cached')
   expect(footerView(turn({ pct: { five_hour: { v: 6.1, mode: 'estimate' }, seven_day: null } })).severity).toBe('alert')
 })
 
@@ -36,7 +36,7 @@ test('shows the footer under the answer', async ($, on) => {
   await seed(k)
   await start($)
   const r = await runTurn($, k, { turnId: 't1', after: { five: 18, week: 20 } })
-  expect(r.text).toBe('◔ Used: +11.0%/– 9K Tok')
+  expect(r.text).toBe('◔ Used: +11.0%/– 9K Tok · 100K cached')
 })
 
 test('shows only tokens without limits', async ($, on) => {
@@ -45,7 +45,7 @@ test('shows only tokens without limits', async ($, on) => {
   k.limits.week = null
   await start($)
   const r = await runTurn($, k, { turnId: 't1', after: { five: null, week: null } })
-  expect(r.text).toBe('○ Used: 9K Tok')
+  expect(r.text).toBe('○ Used: 9K Tok · 100K cached')
 })
 
 test('draws the row under the matching block in tree mode', async ($, on) => {
@@ -60,7 +60,7 @@ test('draws the row under the matching block in tree mode', async ($, on) => {
   const r = await runTurn($, k, { turnId: 't1', after: { five: 18, week: 20 } })
   expect(r.text).toBe('')
   const ui = await $.ui.mount(MESSAGE('All set.\n\nDone.'))
-  expect((await ui.find({ type: 'Text', text: /Used:/ }))?.text).toBe('◔ Used: +11.0%/– 9K Tok')
+  expect((await ui.find({ type: 'Text', text: /Used:/ }))?.text).toBe('◔ Used: +11.0%/– 9K Tok · 100K cached')
   await ui.unmount()
   const other = await $.ui.mount(MESSAGE('Something else'))
   expect((await other.find({ type: 'Text', text: /engine/ }))?.text).toBe('engine')
@@ -80,6 +80,6 @@ test('adds the line inside the Markdown in rewrite mode', async ($, on) => {
   await start($)
   await runTurn($, k, { turnId: 't1', after: { five: 18, week: 20 } })
   const ui = await $.ui.mount(MESSAGE('Done.'))
-  expect(seen).toBe('Done.\n\n`◔ Used: +11.0%/– 9K Tok`')
+  expect(seen).toBe('Done.\n\n`◔ Used: +11.0%/– 9K Tok · 100K cached`')
   await ui.unmount()
 })

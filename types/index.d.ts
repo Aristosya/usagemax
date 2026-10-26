@@ -27,6 +27,8 @@ export type TurnRecord = {
   pct: TurnPct
   isParallel: boolean
   reason: TurnReason
+  /** The Claude account the request ran under; absent in requests recorded before 0.5.8. */
+  account?: string
 }
 
 export type SessionFile = {
@@ -39,8 +41,6 @@ export type SessionFile = {
   /** Which turn started each background agent, by agent id. */
   agentTurns: Record<string, string>
   turns: TurnRecord[]
-  /** The Claude account the chat runs under; absent in files recorded before accounts. */
-  account?: string
 }
 
 /** Percent of a window per cost unit; null until enough solo turns were seen. */

@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=for-the-badge&logo=claude&logoColor=white"></a>
-  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.7" src="https://img.shields.io/badge/version-0.5.7-2ea44f?style=for-the-badge"></a>
+  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.8" src="https://img.shields.io/badge/version-0.5.8-2ea44f?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6?style=for-the-badge"></a>
 </p>
 
@@ -47,14 +47,15 @@ Claude reports the limits only with an answer, so the band refreshes itself ever
 
 <img src="assets/screenshots/footer.png" alt="Usage line under Claude answers: share of the 5-hour window, share of the week, tokens; yellow from 3%, red from 6%" width="760">
 
-`◑ Used: +5.2%/+0.43% 121K Tok`
+`◑ Used: +5.2%/+0.43% 121K Tok · 2.4M cached`
 
 | Part | Meaning |
 | --- | --- |
 | `◑` | How full the 5-hour window is: `○ ◔ ◑ ◕ ●` |
 | `+5.2%` | This request's share of the 5-hour window |
 | `+0.43%` | This request's share of the weekly limit |
-| `121K Tok` | Tokens sent and written, cache reads left out |
+| `121K Tok` | Tokens sent and written |
+| `2.4M cached` | Tokens read from the prompt cache: cheap per token, yet most of a long chat's cost |
 
 With `"footer": "tree"` the line turns yellow from 3% of the window and red from 6%.
 
@@ -151,7 +152,7 @@ claude plugin marketplace remove usagemax
 
 Claude Code reports limit usage in whole percents. A small request moves the counter by 0 or 1 point, and that difference tells you nothing.
 
-usagemax prices each request's tokens by Anthropic's list prices and learns one rate per window for the whole account: how far the counters grew over the last 7 days, divided by the cost of every request in that span. A request's share is its cost times the rate. A request that moved the window by 10 points or more on its own shows the measured difference instead.
+usagemax prices each request's tokens by Anthropic's list prices and learns one rate per window for the whole account: how far the counters grew over the last 7 days, divided by the cost of every request in that span. A request's share is its cost times the rate. A request that moved the window by 10 points or more on its own shows the measured difference instead. A share never goes above how far the counter grew while the request ran, plus one point for rounding. Each Claude account learns its own rate.
 
 During the first hours the rate has no data, and the line shows tokens only.
 
@@ -191,12 +192,12 @@ A new mode applies from the next answer. The plugin speaks English. It switches 
 | --- | --- |
 | `%USERPROFILE%\.claude\usagemax\sessions\<chat id>.json` | One chat's requests: time, first 120 characters of the prompt, tokens, limit readings, share |
 | `%USERPROFILE%\.claude\usagemax\settings.json` | Settings |
-| `%USERPROFILE%\.claude\usagemax\accounts.json` | When each account last reset its statistics, and which account owns the chats recorded before 0.5.7 |
+| `%USERPROFILE%\.claude\usagemax\accounts.json` | When each account last reset its statistics, and which account owns requests recorded before 0.5.8 that no limit reading ties to an account |
 | `%USERPROFILE%\.claude\usagemax\band-fault.json` | The last error of the band above the prompt, if it had one |
 
 - Each chat writes its own file. Records older than 30 days go away when a chat starts.
 - Chat titles come from Claude Code's local transcripts.
-- usagemax reads the signed-in account from Claude Code's `.claude.json` and tags each chat file with it.
+- usagemax takes the account from the chat's environment, which Claude Desktop sets for each chat (`.claude.json` in a terminal session), and marks each request with it.
 - The one network call is that update check: `git fetch` of this repository, at most once an hour, only when you installed from GitHub. It sends nothing about you or your usage. `"selfUpdate": false` turns it off.
 
 ## FAQ
@@ -216,7 +217,7 @@ The account rate needs a few hours of requests. Until then usagemax shows tokens
 <details>
 <summary><b>I switch between two Claude accounts. Do their numbers mix?</b></summary>
 
-No. Each chat file carries the account it ran under, and the panel, the band and the commands show only the signed-in account. Chats recorded before 0.5.7 go to the first account usagemax sees after the update.
+No. Each request carries the account it ran under, so a chat that moved to another account splits between the two. The panel, the band and the commands show only the signed-in account. Requests recorded before 0.5.8 go to the account whose limits they saw.
 </details>
 
 <details>

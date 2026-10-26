@@ -13,10 +13,14 @@ export function sameWindow(a: WindowReading, b: WindowReading): boolean {
   return Math.abs(Date.parse(a.resetsAt) - Date.parse(b.resetsAt)) <= SAME_WINDOW_MS
 }
 
-/** Growth of a window between two readings; a new window counts from zero. */
+/**
+ * Growth of a window between two readings; a new window counts from zero. A window that resets earlier than
+ * the one before it cannot follow it: that is another account's counter, and it tells nothing.
+ */
 export function rawDelta(before: WindowReading | undefined, after: WindowReading | undefined): number | null {
   if (!before || !after) return null
-  return sameWindow(before, after) ? Math.max(0, after.pct - before.pct) : after.pct
+  if (sameWindow(before, after)) return Math.max(0, after.pct - before.pct)
+  return Date.parse(after.resetsAt) > Date.parse(before.resetsAt) ? after.pct : null
 }
 
 function windowPercent(
@@ -30,7 +34,11 @@ function windowPercent(
   const isLarge = raw !== null && raw >= RAW_STEPS * i.step
   if (isLarge && !i.isParallel && before && sameWindow(before, after)) return { v: raw, mode: 'exact' }
   const rate = i.rate[w]
-  if (rate !== null) return { v: i.units * rate, mode: 'estimate' }
+  if (rate !== null) {
+    // A request cannot use more of a window than the window grew while it ran, give or take a reading step.
+    const bound = raw !== null && before && sameWindow(before, after) ? raw + i.step : Infinity
+    return { v: Math.min(i.units * rate, bound), mode: 'estimate' }
+  }
   return isLarge ? { v: raw, mode: 'raw' } : null
 }
 
@@ -69,7 +77,7 @@ export function calibrate(turns: readonly TurnRecord[], now: number): Rate {
     for (let i = 1; i < points.length; i += 1) {
       const prev = points[i - 1]?.r
       const next = points[i]?.r
-      if (prev && next) growth += sameWindow(prev, next) ? Math.max(0, next.pct - prev.pct) : next.pct
+      if (prev && next) growth += rawDelta(prev, next) ?? 0
     }
     const units = recent.filter(t => t.endedAt > first.at && t.endedAt <= last.at).reduce((sum, t) => sum + t.units, 0)
     if (growth >= READY_POINTS[w] && units > 0) rate[w] = growth / units

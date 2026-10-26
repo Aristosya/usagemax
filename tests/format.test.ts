@@ -31,6 +31,8 @@ test('builds the footer', () => {
   expect(footerText({ pct5h: null, pctWeek: null, tok: 9000 })).toBe('Used: 9K Tok')
   expect(footerText({ pct5h: 1.2, pctWeek: null, tok: 9000 })).toBe('Used: +1.2%/– 9K Tok')
   expect(footerText({ pct5h: null, pctWeek: 0.02, tok: 9000 })).toBe('Used: –/+0.02% 9K Tok')
+  expect(footerText({ pct5h: 0.37, pctWeek: 0.1, tok: 22_000, cached: 9_800_000 })).toBe('Used: +0.4%/+0.10% 22K Tok · 9.8M cached')
+  expect(footerText({ pct5h: null, pctWeek: null, tok: 9000, cached: 0 })).toBe('Used: 9K Tok')
 })
 
 test('colours from 3% and 6%', () => {

@@ -21,12 +21,12 @@ export type Kit = {
 
 /** Everything beneath the plugin in a test: disk, env, clock, store, session facts and limit readings. */
 /** `language` is Claude Code's setting; the suite reads Russian strings, so Russian unless a test says otherwise. */
-export function kit(on: On, o: { sessionId?: string; now?: number; language?: string | null } = {}): Kit {
+export function kit(on: On, o: { sessionId?: string; now?: number; language?: string | null; env?: Record<string, string> } = {}): Kit {
   const disk = memDisk(o.now ?? 1_000_000)
   const clock = mock.clock(on, { now: o.now ?? 1_000_000 })
   const k: Kit = { disk, clock, limits: { five: 7, week: 20, fiveResets: WINDOW_A }, sessionId: o.sessionId ?? 's1', opened: [], registered: [], toasts: [] }
   mock.store(on)
-  mock.env(on, { USERPROFILE: HOME })
+  mock.env(on, { USERPROFILE: HOME, ...o.env })
   const stamp = <T>(value: T) => {
     disk.now.ms = clock.now()
     return value

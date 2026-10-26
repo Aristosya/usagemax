@@ -1,4 +1,4 @@
-import type { SessionFile } from '../../types'
+import type { SessionFile, TurnRecord } from '../../types'
 import type { Disk } from './disk'
 
 /** The signed-in Claude account: Claude Code's own record of the login, read off the person's config file. */
@@ -51,8 +51,46 @@ export function stampLegacy(book: AccountBook, account: string): AccountBook {
   return book.legacy === null ? { ...book, legacy: account } : book
 }
 
-export function belongsTo(file: SessionFile, account: string, legacy: string | null): boolean {
-  return file.account === undefined ? legacy === account : file.account === account
+/** Reset times within a minute name one weekly window. */
+const SAME_WEEK_MS = 60_000
+
+/** When the weekly window a request saw resets; null without one. */
+function weekOf(t: TurnRecord): number | null {
+  const w = t.readings.after?.seven_day ?? t.readings.before?.seven_day
+  return w ? Date.parse(w.resetsAt) : null
+}
+
+/**
+ * Names the account of each request. A request carries its account from 0.5.8 on. An earlier one belongs to
+ * the account whose marked requests saw the same weekly window, since each account counts its own week, and
+ * to `legacy` when none did. A chat can move between accounts, so the chat itself names none. Until the
+ * signed-in account `current` has a marked request, it claims the week of the newest reading.
+ */
+export function accountsOf(files: readonly SessionFile[], legacy: string, current?: string): (t: TurnRecord) => string {
+  const turns = files.flatMap(f => f.turns)
+  const weeks = new Map<string, number[]>()
+  const claim = (account: string, w: number) => {
+    const seen = weeks.get(account) ?? []
+    if (!seen.some(x => Math.abs(x - w) <= SAME_WEEK_MS)) seen.push(w)
+    weeks.set(account, seen)
+  }
+  for (const t of turns) {
+    const w = weekOf(t)
+    if (t.account !== undefined && w !== null) claim(t.account, w)
+  }
+  if (current !== undefined && !weeks.has(current)) {
+    const newest = turns.reduce<TurnRecord | null>((best, t) => ((t.readings.after?.at ?? 0) > (best?.readings.after?.at ?? 0) ? t : best), null)
+    const w = newest === null ? null : weekOf(newest)
+    if (w !== null) claim(current, w)
+  }
+  return t => {
+    if (t.account !== undefined) return t.account
+    const w = weekOf(t)
+    if (w !== null) {
+      for (const [account, seen] of weeks) if (seen.some(x => Math.abs(x - w) <= SAME_WEEK_MS)) return account
+    }
+    return legacy
+  }
 }
 
 /** The file with only the requests that ended after a reset; the whole file without one. */

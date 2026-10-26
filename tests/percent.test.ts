@@ -1,7 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { calibrate, sameWindow, turnPercent } from '../hooks/lib/percent'
-import { DAY, WINDOW_A, WINDOW_B, reading, turn } from './factory'
+import { DAY, WEEK, WINDOW_A, WINDOW_B, reading, turn } from './factory'
 import { expectNear } from './near'
 
 const NO_RATE = { five_hour: null, seven_day: null }
@@ -56,6 +56,23 @@ test('counts a reset window from zero', () => {
   expect(p.five_hour).toEqual({ v: 12, mode: 'raw' })
 })
 
+test('never shows more than the counter grew during the request, plus one reading step', () => {
+  // The week stayed at 40%: the request cannot have used 2% of it.
+  const p = turnPercent({ before: reading(0, 11, 40), after: reading(1, 12, 40), units: 2.19, isParallel: false, rate: { five_hour: 1.42, seven_day: 0.9 }, step: 1 })
+  expectNear(p.five_hour?.v, 2)
+  expectNear(p.seven_day?.v, 1)
+  expect(p.seven_day?.mode).toBe('estimate')
+})
+
+/** Another account's week: it resets before this one, so it cannot be this week's successor. */
+const OTHER_WEEK = '2026-10-27T14:00:00.000Z'
+
+test('tells nothing from a request that saw two accounts', () => {
+  const before = { at: 0, seven_day: { pct: 76, resetsAt: WEEK } }
+  const after = { at: 1, seven_day: { pct: 40, resetsAt: OTHER_WEEK } }
+  expect(turnPercent({ before, after, units: 1, isParallel: false, rate: { five_hour: null, seven_day: null }, step: 1 }).seven_day).toBeNull()
+})
+
 test('leaves out a window the account does not have', () => {
   const p = turnPercent({ before: reading(0, 7, null), after: reading(1, 18, null), units: 1, isParallel: false, rate: NO_RATE, step: 1 })
   expect(p.seven_day).toBeNull()
@@ -90,6 +107,14 @@ test('counts a reset window from its new value', () => {
   const now = 10 * DAY
   const turns = [ended('a1', now - 5000, 1, 95, 20, null, WINDOW_A), ended('a2', now - 4000, 2, 6, 23, null, WINDOW_B)]
   expectNear(calibrate(turns, now).five_hour, 6 / 2)
+})
+
+test('does not count a switch to another account as growth', () => {
+  const now = 10 * DAY
+  const week = (id: string, at: number, pct: number, resetsAt: string) =>
+    turn({ turnId: id, startedAt: at - 500, endedAt: at, units: 1, readings: { before: null, after: { at, seven_day: { pct, resetsAt } } } })
+  const turns = [week('a1', now - 4000, 70, WEEK), week('a2', now - 3000, 76, WEEK), week('b1', now - 2000, 40, OTHER_WEEK), week('b2', now - 1000, 43, OTHER_WEEK)]
+  expectNear(calibrate(turns, now).seven_day, 9 / 3)
 })
 
 test('waits for 5 points of the 5-hour window and 3 of the week', () => {

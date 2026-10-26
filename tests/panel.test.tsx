@@ -97,7 +97,7 @@ test('names its build at the bottom', async ($, on) => {
   const k = kit(on)
   await twoTurns($, k)
   await openViaButton($)
-  expect((await texts($)).at(-1)).toBe('usagemax 0.5.7')
+  expect((await texts($)).at(-1)).toBe('usagemax 0.5.8')
 })
 
 test('places pace, trend, activity and models in their order', async ($, on) => {
