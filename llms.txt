@@ -24,7 +24,7 @@ claude plugin install usagemax@usagemax --scope user
 - Platform: Claude Desktop, Code tab. Tested with Claude Code 2.1.304 on Windows 11.
 - Needs a Claude subscription with the 5-hour and weekly limits, such as Pro or Max. API-key sessions get tokens only.
 - Storage: `%USERPROFILE%\.claude\usagemax\sessions\<chat id>.json`, 30-day retention, first 120 characters of each prompt.
-- Network: none.
+- Network: one `git fetch` of this repository at most once an hour when installed from GitHub, so Claude Code's Update button finds new versions; `"selfUpdate": false` in settings.json turns it off. No usage data leaves the computer.
 - Interface language: English; Russian when Claude Code's `language` setting is Russian.
 - Updates: turn on auto-update for the usagemax marketplace in `/plugin` → Marketplaces, or run `claude plugin update usagemax@usagemax`.
 - Developers: Roman Chernogorov, Danil Martsinkovskii.

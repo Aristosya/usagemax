@@ -9,6 +9,7 @@ import { calibrate, turnPercent } from './lib/percent'
 import { readingFrom } from './lib/readings'
 import { resolveTitle } from './lib/title'
 import { units } from './lib/weights'
+import { checkForUpdate } from './update'
 
 /** Limit readings move in whole points on Claude Code 2.1.304. */
 const STEP = 1
@@ -22,6 +23,7 @@ const TITLE_EVERY = 10
 const ZERO: Tokens = { in: 0, out: 0, cacheRead: 0, cacheWrite: 0 }
 /** How often the band re-reads every chat's newest reading and counts the time to reset down. */
 const BAND_REFRESH_MS = 60_000
+const UPDATE_DELAY_MS = 5_000
 
 type Pending = { startedAt: number; prompt: string; before: Reading | null; agentTokens: Tokens; agentUnits: number; agentCount: number }
 
@@ -133,6 +135,10 @@ export function capture(on: On): void {
     ticker?.cancel()
     ticker = $.clock.every(BAND_REFRESH_MS, () => {
       refreshBand($).catch(() => undefined)
+    })
+    // A few seconds in, off the start's path: a git fetch must not hold the first prompt.
+    $.clock.after(UPDATE_DELAY_MS, () => {
+      checkForUpdate($).catch(() => undefined)
     })
     return r
   })

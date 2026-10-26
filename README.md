@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=for-the-badge&logo=claude&logoColor=white"></a>
-  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.3" src="https://img.shields.io/badge/version-0.5.3-2ea44f?style=for-the-badge"></a>
+  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.4" src="https://img.shields.io/badge/version-0.5.4-2ea44f?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6?style=for-the-badge"></a>
 </p>
 
@@ -14,7 +14,7 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript&logoColor=white">
   <img alt="Windows 11" src="https://img.shields.io/badge/Windows-11-0078D4?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAyNCAyNCc+PHBhdGggZmlsbD0nd2hpdGUnIGQ9J00wIDBoMTF2MTFIMHpNMTMgMGgxMXYxMUgxM3pNMCAxM2gxMXYxMUgwek0xMyAxM2gxMXYxMUgxM3onLz48L3N2Zz4=">
   <img alt="127 test cases" src="https://img.shields.io/badge/tests-127%20cases-55b685">
-  <img alt="No network calls" src="https://img.shields.io/badge/network-none-55b685">
+  <img alt="Network: update check only" src="https://img.shields.io/badge/network-update%20check%20only-55b685">
   <img alt="English and Russian" src="https://img.shields.io/badge/UI-EN%20%7C%20RU-8d8a84">
 </p>
 
@@ -121,18 +121,21 @@ $CC = Get-ChildItem "$env:APPDATA\Claude\claude-code" -Directory | Sort-Object {
 
 ### Update
 
-Turn on auto-update once, and new versions install themselves. Claude Code keeps auto-update off for third-party marketplaces until you turn it on:
+When a new version is out, usagemax says so in a toast. Press **Update** in **Settings → Your plugins → Usagemax**, then start a new chat or run `/reload-plugins`.
 
-1. Run `claude` in a terminal and type `/plugin`.
-2. Open the **Marketplaces** tab, select **usagemax**, then **Enable auto-update**.
+Claude Code's Update button compares against its own copy of this repository, and for a third-party marketplace it refreshes that copy only with auto-update on. So usagemax refreshes it itself: a few seconds after a chat starts, at most once an hour, it runs `git fetch` on that copy. A plugin added from a local folder is left alone.
 
-After that, Claude Code checks for a new version each time a session starts and installs it in the background. Open chats pick it up after `/reload-plugins`, new chats load it by themselves.
+Versions before 0.5.4 lack this. To get past them once:
 
-To update by hand:
+```bash
+claude plugin marketplace update usagemax
+```
 
 ```bash
 claude plugin update usagemax@usagemax
 ```
+
+To have Claude Code install new versions by itself: run `claude`, type `/plugin`, open **Marketplaces**, select **usagemax**, then **Enable auto-update**.
 
 ### Uninstall
 
@@ -166,7 +169,7 @@ During the first hours the rate has no data, and the line shows tokens only.
 `%USERPROFILE%\.claude\usagemax\settings.json`, optional:
 
 ```json
-{ "footer": "tree" }
+{ "footer": "tree", "selfUpdate": true }
 ```
 
 | `footer` | Line under the answer |
@@ -174,6 +177,11 @@ During the first hours the rate has no data, and the line shows tokens only.
 | `text` (default) | Plain text from Claude Code |
 | `tree` | Drawn by usagemax: yellow from 3% of the 5-hour window, red from 6% |
 | `rewrite` | Added to the end of the answer as code |
+
+| `selfUpdate` | Update check |
+| --- | --- |
+| `true` (default) | Refresh this repository's copy from GitHub at most once an hour, so the Update button finds new versions |
+| `false` | No network at all |
 
 A new mode applies from the next answer. The plugin speaks English. It switches to Russian when Claude Code's `language` setting is Russian.
 
@@ -186,7 +194,7 @@ A new mode applies from the next answer. The plugin speaks English. It switches 
 
 - Each chat writes its own file. Records older than 30 days go away when a chat starts.
 - Chat titles come from Claude Code's local transcripts.
-- usagemax makes no network calls.
+- The one network call is that update check: `git fetch` of this repository, at most once an hour, only when you installed from GitHub. It sends nothing about you or your usage. `"selfUpdate": false` turns it off.
 
 ## FAQ
 
