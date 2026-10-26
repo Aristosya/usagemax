@@ -64,7 +64,7 @@ With `"footer": "tree"` the line turns yellow from 3% of the window and red from
 <img src="assets/screenshots/panel.png" alt="usagemax panel: 5-hour window, pace, limits, 7-day trend, hour heatmap, this chat, models, top chats, last requests" width="520" align="right">
 
 - **5-hour window** with time to reset and a run-out forecast
-- **Pace**: window used against time passed
+- **Pace** for the 5-hour limit and the week: used and left, against the time that passed
 - **Limits**: 5-hour and weekly, each with its reset time
 - **Trend** for 7 days and an **activity heatmap** by hour
 - **This chat**: total, heaviest request, last 10 requests

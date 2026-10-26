@@ -100,6 +100,7 @@ export type PanelData = {
   /** The account rate the shares were computed with. */
   rate: Rate
   pace: Pace | null
+  weekPace: Pace | null
   /** The last 7 local days, today last, and the busiest day's weekly share. */
   trend: { days: DayCost[]; peakWeek: number | null }
   /** Cost per local hour: 7 rows of 24, oldest day first. */

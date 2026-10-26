@@ -114,11 +114,11 @@ export function modelName(model: string): string {
 }
 
 /** How full the 5-hour window is against how much of its time has passed; null once it reset or without a reset time. */
-export function paceOf(w: WindowReading, now: number): Pace | null {
+export function paceOf(w: WindowReading, now: number, windowMs = WINDOW_5H): Pace | null {
   const resetsAt = Date.parse(w.resetsAt)
   if (Number.isNaN(resetsAt) || resetsAt <= now) return null
-  const start = resetsAt - WINDOW_5H
-  const elapsed = Math.round(Math.min(100, Math.max(0, ((now - start) / WINDOW_5H) * 100)))
+  const start = resetsAt - windowMs
+  const elapsed = Math.round(Math.min(100, Math.max(0, ((now - start) / windowMs) * 100)))
   const verdict = w.pct > elapsed + PACE_SLACK ? 'faster' : w.pct < elapsed - PACE_SLACK ? 'slower' : 'onPace'
   return { used: w.pct, elapsed, verdict }
 }

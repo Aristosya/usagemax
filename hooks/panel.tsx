@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, On } from 'claude-code'
 
-import type { Forecast, ModelShare, PanelData, Period, Reading, TopRow, TurnRecord, WindowReading } from '../types'
+import type { Forecast, ModelShare, Pace, PanelData, Period, Reading, TopRow, TurnRecord, WindowReading } from '../types'
 import { diskOf } from './lib/disk'
 import { formatPct5h, formatPctWeek, formatTok, visibleTokens } from './lib/format'
 import { type Lang, type MsgKey, formatDuration, langOf, requestsLabel, t } from './lib/i18n'
@@ -32,6 +32,8 @@ const COLOR_5H = 'claude'
 const COLOR_WEEK = 'permission'
 const COLOR_OTHER = 'inactive'
 const COLOR_TIME = 'inactive'
+/** What is left of a limit, beside the used part in the 5-hour colour. */
+const COLOR_LEFT = 'success'
 /** Heatmap levels 0-3: idle and low in the neutral colour, busy in the 5-hour colour; 0 and 2 are drawn dim. */
 const HEAT_COLORS = ['inactive', 'inactive', 'claude', 'claude'] as const
 const DAY_KEY: readonly MsgKey[] = ['day.0', 'day.1', 'day.2', 'day.3', 'day.4', 'day.5', 'day.6']
@@ -53,6 +55,7 @@ function modelSegments(models: readonly ModelShare[]): { color: string; width: n
 
 /** Files read for the panel: the week plus a day of slack around its reset. */
 const LOOKBACK_MS = 8 * 86_400_000
+const WEEK_MS = 7 * 86_400_000
 
 const panel = atom({ plugin: 'usagemax', key: 'panel' } as const, null as PanelData | null)
 const period = atom({ plugin: 'usagemax', key: 'period' } as const, 'today' as Period)
@@ -166,6 +169,7 @@ export async function computePanel($: EngineInterface): Promise<PanelData> {
     at: now,
     rate,
     pace: current.five_hour ? paceOf(current.five_hour, now) : null,
+    weekPace: current.seven_day ? paceOf(current.seven_day, now, WEEK_MS) : null,
     trend: { days, peakWeek: rate.seven_day === null || maxDay === 0 ? null : maxDay * rate.seven_day },
     heat: hourlyGrid(files, now, tz),
     models,
@@ -229,7 +233,7 @@ export function usagePanel(on: On): void {
     const resetIn = (resetsAt: string) => t(lang, 'reset.in', { time: formatDuration(Date.parse(resetsAt) - data.at, lang) })
 
     // The desktop draws no Svg here and sizes boxes its own way: bars are coloured line characters.
-    const Bar = (pct: number, color: string, width = BAR_WIDTH) => {
+    const Bar = (pct: number, color: string, width = BAR_WIDTH, rest?: string) => {
       const filled = Math.round((Math.min(100, Math.max(0, pct)) / 100) * width)
       return (
         <Box flexDirection="row">
@@ -239,7 +243,7 @@ export function usagePanel(on: On): void {
             </Text>
           )}
           {filled < width && (
-            <Text mono dimColor>
+            <Text mono color={rest} dimColor={rest === undefined}>
               {'━'.repeat(width - filled)}
             </Text>
           )}
@@ -256,6 +260,26 @@ export function usagePanel(on: On): void {
       <Text size="caption" bold dimColor>
         {text.toUpperCase()}
       </Text>
+    )
+    /** One limit's pace: used in orange and what is left in green, then the time that passed. */
+    const PaceBlock = (title: MsgKey, pace: Pace) => (
+      <Box flexDirection="column">
+        {Cap(t(lang, title))}
+        {Row(
+          <Text>{t(lang, 'pace.used')}</Text>,
+          <Box flexDirection="row" gap={1}>
+            <Text mono tabular color={COLOR_5H}>{`${pace.used}%`}</Text>
+            <Text dimColor>/</Text>
+            <Text mono tabular color={COLOR_LEFT}>{t(lang, 'panel.left', { pct: Math.max(0, 100 - pace.used) })}</Text>
+          </Box>,
+        )}
+        {Bar(pace.used, COLOR_5H, BAR_WIDTH, COLOR_LEFT)}
+        {Row(<Text>{t(lang, 'pace.elapsed')}</Text>, <Text mono tabular>{`${pace.elapsed}%`}</Text>)}
+        {Bar(pace.elapsed, COLOR_TIME)}
+        <Text size="caption" color={pace.verdict === 'faster' ? 'warning' : undefined} dimColor={pace.verdict !== 'faster'}>
+          {t(lang, `pace.${pace.verdict}`)}
+        </Text>
+      </Box>
     )
     const Limit = (label: string, r: WindowReading | undefined, color: string) =>
       r && (
@@ -296,18 +320,8 @@ export function usagePanel(on: On): void {
           )}
         </Box>
 
-        {data.pace && (
-          <Box flexDirection="column">
-            {Cap(t(lang, 'panel.pace'))}
-            {Row(<Text>{t(lang, 'pace.used')}</Text>, <Text mono tabular>{`${data.pace.used}%`}</Text>)}
-            {Bar(data.pace.used, COLOR_5H)}
-            {Row(<Text>{t(lang, 'pace.elapsed')}</Text>, <Text mono tabular>{`${data.pace.elapsed}%`}</Text>)}
-            {Bar(data.pace.elapsed, COLOR_TIME)}
-            <Text size="caption" color={data.pace.verdict === 'faster' ? 'warning' : undefined} dimColor={data.pace.verdict !== 'faster'}>
-              {t(lang, `pace.${data.pace.verdict}`)}
-            </Text>
-          </Box>
-        )}
+        {data.pace && PaceBlock('panel.pace5h', data.pace)}
+        {data.weekPace && PaceBlock('panel.paceWeek', data.weekPace)}
 
         <Box flexDirection="column">
           {Cap(t(lang, 'panel.windows'))}
