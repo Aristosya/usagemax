@@ -96,6 +96,21 @@ test('shows one share per period: a day shows the weekly share only', async ($, 
   await ui.unmount()
 })
 
+test('explains the less obvious sections in one line under their names', async ($, on) => {
+  const k = kit(on)
+  await twoTurns($, k)
+  await openViaButton($)
+  const all = await texts($)
+  const under = (header: string, hint: string) => {
+    expect(all).toContain(hint)
+    expect(all.indexOf(hint)).toBeGreaterThan(all.indexOf(header))
+  }
+  under('ЭТОТ ЧАТ', 'Сколько 5-часового лимита съел этот чат в текущем окне')
+  under('ТРЕНД · 7 ДНЕЙ', 'Расход недельного лимита по дням')
+  under('АКТИВНОСТЬ · ЧАСЫ', 'Расход по часам за 7 дней: чем ярче, тем больше')
+  under('ТОП ЧАТОВ · СЕГОДНЯ', 'Какие чаты съели больше всего за период')
+})
+
 test('names its build at the bottom', async ($, on) => {
   const k = kit(on)
   await twoTurns($, k)
@@ -208,7 +223,9 @@ test('lists other usage as a row', async ($, on) => {
   const small = { ...USAGE, input_tokens: 100, output_tokens: 300, cache_read_input_tokens: 10_000, cache_creation_input_tokens: 500 }
   await runTurn($, k, { turnId: 't2', usage: small, after: { five: 26, week: 20 } })
   await openViaButton($)
-  expect((await texts($)).some(x => x.includes('Прочее (Chat, другие устройства)'))).toBe(true)
+  const all = await texts($)
+  expect(all.some(x => x.includes('Прочее (Chat, другие устройства)'))).toBe(true)
+  expect(all).toContain('Расход вне чатов Code: вкладка Chat, телефон, другой компьютер или ещё идущий запрос')
 })
 
 test('switches the top period', async ($, on) => {

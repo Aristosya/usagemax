@@ -130,10 +130,30 @@ export type ButtonState = {
 }
 
 /** One limit as the band's surface module draws it: every string already in the person's language. */
-export type BandLimit = { label: string; color: string; pct: number; filled: number; empty: number; reset: string | null; estimate: string | null }
+export type BandLimit = {
+  label: string
+  color: string
+  pct: number
+  filled: number
+  empty: number
+  /** The word before the percent, `занято`; null where the band is too narrow for words. */
+  used: string | null
+  /** The words before the time to reset, `· сброс через`; null with no words or no time. */
+  resetLabel: string | null
+  reset: string | null
+  estimate: string | null
+}
 
 /** The props of the band's surface module: plain data, as a `Client` takes it. */
-export type BandView = { ring: string; share: string; limits: BandLimit[] }
+export type BandView = {
+  ring: string
+  share: string
+  /** The word before this chat's share, `этот чат`; null where the band is too narrow for words. */
+  chipLabel: string | null
+  limits: BandLimit[]
+  /** The band in plain words, shown while the pointer is over it. */
+  hint: string
+}
 
 /** A footer waiting for the answer block that ends with `tail`. */
 export type FooterEntry = { tail: string; view: FooterView }

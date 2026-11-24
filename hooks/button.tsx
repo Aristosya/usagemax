@@ -65,15 +65,30 @@ function whenText(at: number, now: number, tz: number, lang: Lang): string {
 }
 
 /** The band's limits as plain data, every string in the person's language: what the surface module draws. */
-/** What the band gives up, in order, to stay on one row: the estimate's words, the times to reset, then the bars. */
-type Fit = { longEstimate: boolean; reset: boolean; bar: number }
+/**
+ * What the band gives up, in order, to stay on one row: the estimate's words, the labels (`этот чат`,
+ * `занято`, `сброс через`), the times to reset, then the bars.
+ */
+type Fit = { labels: boolean; longEstimate: boolean; reset: boolean; bar: number }
 const FITS: readonly Fit[] = [
-  { longEstimate: true, reset: true, bar: BAR_WIDTH },
-  { longEstimate: false, reset: true, bar: BAR_WIDTH },
-  { longEstimate: false, reset: false, bar: BAR_WIDTH },
-  { longEstimate: false, reset: false, bar: BAR_WIDTH / 2 },
-  { longEstimate: false, reset: false, bar: 0 },
+  { labels: true, longEstimate: true, reset: true, bar: BAR_WIDTH },
+  { labels: true, longEstimate: false, reset: true, bar: BAR_WIDTH },
+  { labels: false, longEstimate: false, reset: true, bar: BAR_WIDTH },
+  { labels: false, longEstimate: false, reset: false, bar: BAR_WIDTH },
+  { labels: false, longEstimate: false, reset: false, bar: BAR_WIDTH / 2 },
+  { labels: false, longEstimate: false, reset: false, bar: 0 },
 ]
+
+/** The band in one sentence, for the pointer resting on it: whose share it is, of which limit, and what a click does. */
+function hintText(b: ButtonState, now: number, tz: number, lang: Lang): string {
+  const chat = b.sessionPct === null ? t(lang, 'hint.chatUnknown') : t(lang, b.shareWeek === true ? 'hint.chatWeek' : 'hint.chat5h', { pct: shareText(b) })
+  const parts = [chat]
+  if (b.five) parts.push(t(lang, 'hint.five', { pct: b.five.pct, time: whenText(Date.parse(b.five.resetsAt), now, tz, lang) }))
+  if (b.week) parts.push(t(lang, 'hint.week', { pct: b.week.pct, time: whenText(Date.parse(b.week.resetsAt), now, tz, lang) }))
+  parts.push(t(lang, 'hint.open'))
+  const text = parts.join(' · ')
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
 
 function viewAt(b: ButtonState, now: number, tz: number, fit: Fit): BandView {
   const lang = b.lang ?? 'en'
@@ -83,21 +98,25 @@ function viewAt(b: ButtonState, now: number, tz: number, fit: Fit): BandView {
     const time = typeof runsOutAt === 'number' ? whenText(runsOutAt, now, tz, lang) : null
     const estimate = time === null ? null : t(lang, fit.longEstimate ? 'band.runsOut' : 'band.runsOutShort', { time })
     const reset = fit.reset ? formatDuration(Date.parse(r.resetsAt) - now, lang) : null
-    return [{ label, color, pct: r.pct, filled, empty: fit.bar - filled, reset, estimate }]
+    const used = fit.labels ? t(lang, 'band.used') : null
+    const resetLabel = fit.labels && reset !== null ? t(lang, 'band.resetIn') : null
+    return [{ label, color, pct: r.pct, filled, empty: fit.bar - filled, used, resetLabel, reset, estimate }]
   }
   return {
     ring: ringGlyph(b.ring),
     share: shareText(b),
+    chipLabel: fit.labels ? t(lang, 'band.thisChat') : null,
     limits: [...limit(t(lang, 'band.5h'), b.five, ACCENT, b.fiveRunsOutAt), ...limit(t(lang, 'band.week'), b.week, WEEK_COLOR, b.weekRunsOutAt)],
+    hint: hintText(b, now, tz, lang),
   }
 }
 
 /** The band's width in cells as the surface module lays it out: the chip in its border, then each limit. */
 export function bandWidth(v: BandView): number {
-  const chip = 4 + [...v.ring].length + 1 + [...v.share].length
+  const chip = 4 + [...v.ring].length + 1 + (v.chipLabel === null ? 0 : [...v.chipLabel].length + 1) + [...v.share].length
   const limit = (l: BandLimit) => {
     const bar = l.filled + l.empty
-    const parts = [l.label, bar > 0 ? '━'.repeat(bar) : null, `${l.pct}%`, l.reset, l.estimate].filter((p): p is string => p !== null)
+    const parts = [l.label, bar > 0 ? '━'.repeat(bar) : null, l.used, `${l.pct}%`, l.resetLabel, l.reset, l.estimate].filter((p): p is string => p !== null)
     return parts.reduce((sum, p) => sum + [...p].length, 0) + parts.length - 1
   }
   return chip + v.limits.reduce((sum, l) => sum + 2 + limit(l), 0)
@@ -142,6 +161,7 @@ export function usageButton(on: On): void {
       <Box flexDirection="row" alignItems="center" flexWrap="nowrap" overflow="hidden" columnGap={2}>
         <Box flexDirection="row" alignItems="center" gap={1} flexShrink={0} borderStyle="round" borderColor={ACCENT} paddingX="xs">
           <Text color={ACCENT}>{view.ring}</Text>
+          {view.chipLabel !== null && <Text dimColor>{view.chipLabel}</Text>}
           <Button key={CHIP_KEY} label={view.share} plain onPress={() => openPanel($)} />
         </Box>
         {view.limits.map(l => (
@@ -159,7 +179,9 @@ export function usageButton(on: On): void {
                 </Text>
               )}
             </Box>
+            {l.used !== null && <Text dimColor>{l.used}</Text>}
             <Text color="text" bold mono tabular>{`${l.pct}%`}</Text>
+            {l.resetLabel !== null && <Text dimColor>{l.resetLabel}</Text>}
             {l.reset !== null && <Text dimColor>{l.reset}</Text>}
             {l.estimate !== null && <Text color="warning">{l.estimate}</Text>}
           </Box>

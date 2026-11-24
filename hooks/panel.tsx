@@ -254,6 +254,12 @@ export function usagePanel(on: On): void {
         {right}
       </Box>
     )
+    /** One dim line under a section's name: what the section shows. */
+    const Hint = (key: MsgKey) => (
+      <Text size="caption" dimColor>
+        {t(lang, key)}
+      </Text>
+    )
     const Cap = (text: string) => (
       <Text size="caption" bold dimColor>
         {text.toUpperCase()}
@@ -311,6 +317,7 @@ export function usagePanel(on: On): void {
               {t(lang, 'panel.peak', { pct: data.trend.peakWeek === null ? '–' : shareWeek(data.trend.peakWeek) })}
             </Text>,
           )}
+          {Hint('panel.hintTrend')}
           <Box flexDirection="row" gap={1}>
             {data.trend.days.map(d => (
               <Box key={`trend-${d.start}`} flexDirection="column" alignItems="center">
@@ -327,6 +334,7 @@ export function usagePanel(on: On): void {
 
         <Box flexDirection="column">
           {Cap(t(lang, 'panel.activity'))}
+          {Hint('panel.hintActivity')}
           {data.heat.map((hours, row) => (
             <Box key={`heat-row-${row}`} flexDirection="row">
               <Text mono dimColor>{`${t(lang, DAY_KEY[data.trend.days[row]?.weekday ?? 0] ?? 'day.0')}${NBSP}`}</Text>
@@ -352,6 +360,7 @@ export function usagePanel(on: On): void {
 
         <Box flexDirection="column">
           {Row(Cap(t(lang, 'panel.session')), <Text size="caption" dimColor>{requestsLabel(session.count, lang)}</Text>)}
+          {Hint(data.fiveHour ? 'panel.hintSession5h' : 'panel.hintSessionWeek')}
           {session.count === 0 ? (
             <Text dimColor>{t(lang, 'panel.noRequests')}</Text>
           ) : (
@@ -403,6 +412,7 @@ export function usagePanel(on: On): void {
 
         <Box flexDirection="column">
           {Row(Cap(t(lang, 'panel.topOf', { period: t(lang, PERIOD_KEY[chosen]) })), Cap(t(lang, key === 'pctWeek' ? 'panel.colWeek' : 'panel.col5h')))}
+          {Hint('panel.hintTop')}
           {rows.length === 0 && <Text dimColor>{t(lang, 'report.none')}</Text>}
           {rows.map(r => {
             const isOther = r.id === 'other'
@@ -413,6 +423,7 @@ export function usagePanel(on: On): void {
                   <Text mono tabular dimColor={isOther}>{rowShare(r, chosen, key)}</Text>,
                 )}
                 {Bar((r[key] / topMax) * 100, isOther ? COLOR_OTHER : key === 'pctWeek' ? COLOR_WEEK : COLOR_5H, TOP_BAR_WIDTH)}
+                {isOther && Hint('panel.hintOther')}
                 {r.heaviest && (
                   <Text size="caption" dimColor wrap="truncate-end">
                     {shownPrompt(r.heaviest.prompt, lang)}

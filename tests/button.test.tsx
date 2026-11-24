@@ -66,6 +66,25 @@ test('fills the band: 5-hour window and week with a bar, percent and time to res
   expect(text(d, /^\d+ д \d+ ч$/)?.text).toMatch(/д/)
 })
 
+test('labels the chip and each limit in words', async ($, on) => {
+  await afterOneTurn($, on)
+  const all = texts(await band($)).map(x => x.text)
+  expect(all).toContain('этот чат')
+  expect(all.indexOf('этот чат')).toBeLessThan(all.indexOf('11.0%'))
+  expect(all.filter(x => x === 'занято')).toHaveLength(2)
+  expect(all.indexOf('занято')).toBeLessThan(all.indexOf('18%'))
+  expect(all.filter(x => x === '· сброс через')).toHaveLength(2)
+})
+
+test('explains the band in plain words while the pointer is over it', async ($, on) => {
+  await afterOneTurn($, on)
+  const ui = await $.ui.mount(BAND())
+  await ui.pointer({ type: 'enter', x: 10, y: 0, in: CLIENT })
+  const all = texts(walk(await ui.drawn({ in: CLIENT }))).map(x => x.text)
+  await ui.unmount()
+  expect(all.some(x => /^Этот чат съел 11\.0% 5-часового лимита · окно 5 ч занято на 18%, сброс в .+ · неделя занята на 20%, сброс в .+ · нажми, чтобы открыть панель$/.test(x))).toBe(true)
+})
+
 test('keeps the warning out of the band in the first minutes after a reset', async ($, on) => {
   // 15:37 reset, 15:42 at 6% and 2%: five minutes said "runs out at 17:12" and "at 19:37".
   const k = await afterOneTurn($, on, { five: 1, week: 0 })
@@ -107,6 +126,8 @@ test('fits a narrow band on one row by dropping the bars and the times to reset'
   await ui.unmount()
   expect(texts(d).filter(x => /━/.test(x.text))).toEqual([])
   expect(text(d, /^\d+ д \d+ ч$/)).toBeUndefined()
+  expect(text(d, 'этот чат')).toBeUndefined()
+  expect(text(d, 'занято')).toBeUndefined()
   expect(text(d, '18%')?.text).toBe('18%')
 })
 
