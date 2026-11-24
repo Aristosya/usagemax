@@ -79,17 +79,6 @@ const FITS: readonly Fit[] = [
   { labels: false, longEstimate: false, reset: false, bar: 0 },
 ]
 
-/** The band in one sentence, for the pointer resting on it: whose share it is, of which limit, and what a click does. */
-function hintText(b: ButtonState, now: number, tz: number, lang: Lang): string {
-  const chat = b.sessionPct === null ? t(lang, 'hint.chatUnknown') : t(lang, b.shareWeek === true ? 'hint.chatWeek' : 'hint.chat5h', { pct: shareText(b) })
-  const parts = [chat]
-  if (b.five) parts.push(t(lang, 'hint.five', { pct: b.five.pct, time: whenText(Date.parse(b.five.resetsAt), now, tz, lang) }))
-  if (b.week) parts.push(t(lang, 'hint.week', { pct: b.week.pct, time: whenText(Date.parse(b.week.resetsAt), now, tz, lang) }))
-  parts.push(t(lang, 'hint.open'))
-  const text = parts.join(' · ')
-  return text.charAt(0).toUpperCase() + text.slice(1)
-}
-
 function viewAt(b: ButtonState, now: number, tz: number, fit: Fit): BandView {
   const lang = b.lang ?? 'en'
   const limit = (label: string, r: WindowReading | null | undefined, color: string, runsOutAt: number | null | undefined): BandLimit[] => {
@@ -107,7 +96,6 @@ function viewAt(b: ButtonState, now: number, tz: number, fit: Fit): BandView {
     share: shareText(b),
     chipLabel: fit.labels ? t(lang, 'band.thisChat') : null,
     limits: [...limit(t(lang, 'band.5h'), b.five, ACCENT, b.fiveRunsOutAt), ...limit(t(lang, 'band.week'), b.week, WEEK_COLOR, b.weekRunsOutAt)],
-    hint: hintText(b, now, tz, lang),
   }
 }
 

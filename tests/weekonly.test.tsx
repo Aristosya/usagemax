@@ -103,21 +103,6 @@ test("shows this chat's weekly share on the band when the plan has no 5-hour win
   expect(d).not.toContain('5 ч')
 })
 
-test('explains the weekly band in plain words while the pointer is over it', async ($, on) => {
-  const k = kit(on)
-  await seed(k)
-  await weekHistory(k)
-  k.limits.five = null
-  await start($)
-  await runTurn($, k, { turnId: 't1', after: { five: null, week: 20 } })
-  await runTurn($, k, { turnId: 't2', after: { five: null, week: 21 } })
-  const ui = await $.ui.mount(BAND)
-  await ui.pointer({ type: 'enter', x: 10, y: 0, in: 'usagemax-band' })
-  const all = bandTexts(await ui.drawn({ in: 'usagemax-band' }))
-  await ui.unmount()
-  expect(all.some(x => /^Этот чат съел (\d+\.\d\d%|<0\.01%) недельного лимита · неделя занята на 21%, сброс в .+ · нажми, чтобы открыть панель$/.test(x))).toBe(true)
-})
-
 test('writes the weekly share alone under an answer when the plan has no 5-hour window', async ($, on) => {
   const k = kit(on)
   await seed(k)

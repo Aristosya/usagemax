@@ -151,8 +151,6 @@ export type BandView = {
   /** The word before this chat's share, `этот чат`; null where the band is too narrow for words. */
   chipLabel: string | null
   limits: BandLimit[]
-  /** The band in plain words, shown while the pointer is over it. */
-  hint: string
 }
 
 /** A footer waiting for the answer block that ends with `tail`. */

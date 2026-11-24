@@ -76,13 +76,16 @@ test('labels the chip and each limit in words', async ($, on) => {
   expect(all.filter(x => x === '· сброс через')).toHaveLength(2)
 })
 
-test('explains the band in plain words while the pointer is over it', async ($, on) => {
+test('keeps the same row under the pointer, only lit up', async ($, on) => {
   await afterOneTurn($, on)
   const ui = await $.ui.mount(BAND())
   await ui.pointer({ type: 'enter', x: 10, y: 0, in: CLIENT })
   const all = texts(walk(await ui.drawn({ in: CLIENT }))).map(x => x.text)
   await ui.unmount()
-  expect(all.some(x => /^Этот чат съел 11\.0% 5-часового лимита · окно 5 ч занято на 18%, сброс в .+ · неделя занята на 20%, сброс в .+ · нажми, чтобы открыть панель$/.test(x))).toBe(true)
+  expect(all).toContain('этот чат')
+  expect(all).toContain('11.0%')
+  expect(all).toContain('18%')
+  expect(all.some(x => x.startsWith('Этот чат съел'))).toBe(false)
 })
 
 test('keeps the warning out of the band in the first minutes after a reset', async ($, on) => {
