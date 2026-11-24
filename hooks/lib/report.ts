@@ -1,6 +1,7 @@
 import type { Bounds, Forecast, Period, Rate, Reading, SessionFile, SessionSummary, TopRow, TurnRecord, WindowKind, WindowReading } from '../../types'
 import { visibleTokens } from './format'
 import { sameWindow } from './percent'
+import { weekOnly } from './readings'
 
 const HOUR = 3_600_000
 const DAY = 24 * HOUR
@@ -102,14 +103,16 @@ export function sessionSummary(file: SessionFile, current: Reading | null, rate:
   }
   const five = file.turns.filter(t => inWindow(t, 'five_hour'))
   const week = file.turns.filter(t => inWindow(t, 'seven_day'))
+  // Without a 5-hour window every turn passes its test: count the week's instead.
+  const counted = weekOnly(current) ? week : five
   let heaviest: TurnRecord | null = null
-  for (const t of five) if (heaviest === null || t.units > heaviest.units) heaviest = t
+  for (const t of counted) if (heaviest === null || t.units > heaviest.units) heaviest = t
   const unknown = unknownOf(rate)
   return {
     pct5h: five.reduce((s, t) => s + share(t, 'five_hour', rate), 0),
     pctWeek: week.reduce((s, t) => s + share(t, 'seven_day', rate), 0),
-    count: five.length,
-    tokens: five.reduce((s, t) => s + turnTokens(t), 0),
+    count: counted.length,
+    tokens: counted.reduce((s, t) => s + turnTokens(t), 0),
     last: [...file.turns].sort((a, c) => c.endedAt - a.endedAt).slice(0, 10),
     heaviest,
     ...(unknown ? { unknown } : {}),

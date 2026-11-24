@@ -5,8 +5,9 @@ import type { BandLimit, BandView, ButtonState, Rate, Reading, SessionFile, Wind
 import { ringGlyph } from './footer'
 import { bandModuleUsable, saveBandFault } from './lib/bandfault'
 import { diskOf } from './lib/disk'
-import { formatPct5h } from './lib/format'
+import { formatPct5h, formatPctWeek } from './lib/format'
 import { type Lang, type MsgKey, formatDuration, langOf, t } from './lib/i18n'
+import { weekOnly } from './lib/readings'
 import { forecast, sessionSummary, weekForecast } from './lib/report'
 import { clock, openPanel } from './panel'
 
@@ -35,9 +36,12 @@ export async function updateButton($: EngineInterface, file: SessionFile, curren
   ]
   const five = current ? forecast(readings, current.at) : null
   const week = current ? weekForecast(readings, current.at) : null
+  // A plan without the 5-hour window: the ring and the chip speak of the week.
+  const byWeek = weekOnly(current)
   const value: ButtonState = {
-    ring: current?.five_hour?.pct ?? null,
-    sessionPct: summary.unknown?.five_hour ? null : summary.pct5h,
+    ring: byWeek ? (current?.seven_day?.pct ?? null) : (current?.five_hour?.pct ?? null),
+    sessionPct: byWeek ? (summary.unknown?.seven_day ? null : summary.pctWeek) : summary.unknown?.five_hour ? null : summary.pct5h,
+    shareWeek: byWeek,
     five: current?.five_hour ?? null,
     week: current?.seven_day ?? null,
     fiveRunsOutAt: five?.kind === 'runsOutAt' ? five.at : null,
@@ -48,7 +52,8 @@ export async function updateButton($: EngineInterface, file: SessionFile, curren
 }
 
 function shareText(b: ButtonState): string {
-  return b.sessionPct === null ? '–' : formatPct5h(b.sessionPct).replace('+', '')
+  if (b.sessionPct === null) return '–'
+  return (b.shareWeek === true ? formatPctWeek(b.sessionPct) : formatPct5h(b.sessionPct)).replace('+', '')
 }
 
 /** `18:20` today, `Fr 15:30` on another day. */

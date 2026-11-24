@@ -32,7 +32,7 @@
       "applicationCategory": "DeveloperApplication",
       "applicationSubCategory": "Claude Code plugin",
       "operatingSystem": "Windows 11",
-      "softwareVersion": "0.5.8",
+      "softwareVersion": "0.5.9",
       "license": "https://opensource.org/licenses/MIT",
       "url": "https://aristosya.github.io/usagemax/",
       "codeRepository": "https://github.com/Aristosya/usagemax",
@@ -170,9 +170,10 @@ claude plugin install usagemax@usagemax --scope user</pre>
   <details><summary>How is a request's share computed?</summary><p>usagemax prices tokens by Anthropic's list prices and learns one account-wide rate per window from the last 7 days. A request's share is its cost times that rate.</p></details>
   <details><summary>Does it send data anywhere?</summary><p>No. Prompts (first 120 characters) and token counts stay in local files for 30 days.</p></details>
   <details><summary>Do two Claude accounts mix?</summary><p>No. Each chat records its account, and the panel shows only the signed-in one.</p></details>
+  <details><summary>My plan has no 5-hour limit. What does it show?</summary><p>The week alone: the chip, the line under an answer and the panel give weekly shares.</p></details>
   <details><summary>Does it work with an API key?</summary><p>API-key sessions have no 5-hour or weekly window. The line shows tokens only.</p></details>
 
-  <footer>usagemax 0.5.8 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
+  <footer>usagemax 0.5.9 · by Roman Chernogorov &amp; Danil Martsinkovskii · <a href="https://github.com/Aristosya/usagemax/blob/main/LICENSE">MIT</a> · <a href="llms.txt">llms.txt</a></footer>
 </main>
 </body>
 </html>

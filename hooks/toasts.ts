@@ -1,9 +1,8 @@
-import type { EngineInterface, On } from 'claude-code'
+import type { EngineInterface } from 'claude-code'
 
 import type { Forecast, Rate, Reading, SessionFile } from '../types'
 import { formatPct5h } from './lib/format'
 import { type MsgKey, langOf, t } from './lib/i18n'
-import { readingFrom } from './lib/readings'
 import { forecast } from './lib/report'
 import { clock } from './panel'
 
@@ -30,7 +29,8 @@ export function toastsDue(fired: readonly string[], r: Reading, f: Forecast): st
   return due.filter(key => !fired.includes(key))
 }
 
-async function fireToasts($: EngineInterface, r: Reading, f: Forecast): Promise<void> {
+/** Toasts a reading calls for; capture.ts calls it on each measurement and after each turn. */
+export async function fireToasts($: EngineInterface, r: Reading, f: Forecast): Promise<void> {
   const stored = await $.store.get(STORE_KEY)
   const fired = Array.isArray(stored) ? stored.filter((x): x is string => typeof x === 'string') : []
   const due = toastsDue(fired, r, f)
@@ -74,13 +74,4 @@ export async function toastsAfterTurn($: EngineInterface, file: SessionFile, cur
   if (current === null) return
   const readings = file.turns.flatMap(x => [x.readings.before, x.readings.after]).filter((x): x is Reading => x !== null)
   await fireToasts($, current, forecast([...readings, current], current.at))
-}
-
-/** Limit thresholds also fire when a window moves outside a turn of this chat. */
-export function toasts(on: On): void {
-  on('session.measure', async ($, e, next) => {
-    const r = await next(e)
-    await fireToasts($, readingFrom({ startedAt: 0, context: e.context, rateLimits: e.rateLimits }, await $.clock.now()), { kind: 'unknown' })
-    return r
-  })
 }

@@ -8,7 +8,7 @@ const BAND = (hasSurvey = false, bodyColumns = 200) =>
   ({
     plugin: 'usagemax',
     component: 'AbovePrompt',
-    props: { hasSurvey, isWorking: false, maxRows: 10, bodyColumns, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    props: { hasSurvey, isCollapsed: false, isWorking: false, maxRows: 10, bodyColumns, scroll: { offset: 0, bodyRows: 10 }, view: {} },
     surface: 'desktop',
   }) as const
 const MODE = (modes: string[]) => ({ plugin: 'usagemax', component: 'SessionMode', props: { modes }, surface: 'desktop' }) as const

@@ -6,9 +6,10 @@ import { diskOf } from './lib/disk'
 import { loadAll, loadOwn, prune, saveOwn } from './lib/ledger'
 import { isParallel } from './lib/overlap'
 import { calibrate, turnPercent } from './lib/percent'
-import { readingFrom } from './lib/readings'
+import { newestReading, readingFrom } from './lib/readings'
 import { resolveTitle } from './lib/title'
 import { units } from './lib/weights'
+import { fireToasts } from './toasts'
 import { checkForUpdate } from './update'
 import { type Scope, scopeOf, splitScope } from './scope'
 import { sinceReset } from './lib/account'
@@ -88,17 +89,10 @@ async function othersOf($: EngineInterface, file: SessionFile, since: number): P
 const shown = (file: SessionFile): SessionFile => sinceReset(splitScope(file, history, scope).own, scope.resetAt)
 
 /**
- * The newest limit reading any chat recorded by `now`, with the time it was taken. `$.session.usage()`
- * would answer this chat's last response, stale whenever another chat ran in between.
+ * The newest limit reading any chat of this account took by `now`. `$.session.usage()` would answer this
+ * chat's last response, stale whenever another chat ran in between.
  */
-function freshestReading(files: readonly SessionFile[], now: number): Reading | null {
-  let best: Reading | null = null
-  for (const t of files.flatMap(f => f.turns)) {
-    const r = t.readings.after
-    if (r && r.at <= now && (best === null || r.at > best.at)) best = r
-  }
-  return best
-}
+const freshestReading = (files: readonly SessionFile[], now: number): Reading | null => newestReading(files, now, scope.account)
 
 /** The band between this chat's answers: every chat's newest reading, and the time to reset from now. */
 export async function refreshBand($: EngineInterface): Promise<void> {
@@ -161,6 +155,24 @@ export function capture(on: On): void {
     $.clock.after(UPDATE_DELAY_MS, () => {
       checkForUpdate($).catch(() => undefined)
     })
+    return r
+  })
+
+  // The engine measures after each turn and whenever a window moves a whole point, mid-request too:
+  // the band and the toasts take that reading at once, and other chats find it in this chat's file.
+  on('session.measure', async ($, e, next) => {
+    const r = await next(e)
+    const now = await $.clock.now()
+    const reading = readingFrom({ startedAt: 0, context: e.context, rateLimits: e.rateLimits }, now)
+    if (reading.five_hour === undefined && reading.seven_day === undefined) return r
+    if (own !== null && own.sessionId === (await $.session.id())) {
+      scope = await scopeOf($)
+      own.live = { account: scope.account, reading }
+      await saveOwn(diskOf($), own)
+      const others = await othersOf($, own, now - LOOKBACK_MS)
+      await afterTick($, shown(own), freshestReading([own, ...others], now), rate, others)
+    }
+    await fireToasts($, reading, { kind: 'unknown' })
     return r
   })
 

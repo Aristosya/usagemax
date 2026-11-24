@@ -5,7 +5,6 @@ import { capture } from './capture'
 import { commands } from './commands'
 import { footer } from './footer'
 import { usagePanel } from './panel'
-import { toasts } from './toasts'
 
 export const register: Register = on => {
   capture(on)
@@ -13,5 +12,4 @@ export const register: Register = on => {
   usageButton(on)
   usagePanel(on)
   commands(on)
-  toasts(on)
 }

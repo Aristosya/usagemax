@@ -41,6 +41,8 @@ export type SessionFile = {
   /** Which turn started each background agent, by agent id. */
   agentTurns: Record<string, string>
   turns: TurnRecord[]
+  /** The newest reading a request of this chat measured while it ran, and the account it ran under. */
+  live?: { account: string; reading: Reading }
 }
 
 /** Percent of a window per cost unit; null until enough solo turns were seen. */
@@ -106,6 +108,8 @@ export type PanelData = {
   /** Cost per local hour: 7 rows of 24, oldest day first. */
   heat: number[][]
   models: Record<Period, ModelShare[]>
+  /** Whether the plan has a 5-hour window; without one the panel speaks of the week alone. */
+  fiveHour: boolean
   /** The account's email, when the login names one. */
   account: string | null
   /** When this account last reset its statistics. */
@@ -121,6 +125,8 @@ export type ButtonState = {
   fiveRunsOutAt?: number | null
   weekRunsOutAt?: number | null
   lang?: 'ru' | 'en'
+  /** The chip shows this chat's weekly share: the plan has no 5-hour window. */
+  shareWeek?: boolean
 }
 
 /** One limit as the band's surface module draws it: every string already in the person's language. */

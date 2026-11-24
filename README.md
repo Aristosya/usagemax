@@ -4,7 +4,7 @@
 
 <p align="center">
   <a href="#install"><img alt="Claude Code plugin" src="https://img.shields.io/badge/Claude%20Code-plugin-D97757?style=for-the-badge&logo=claude&logoColor=white"></a>
-  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.8" src="https://img.shields.io/badge/version-0.5.8-2ea44f?style=for-the-badge"></a>
+  <a href="https://github.com/Aristosya/usagemax/releases"><img alt="Version 0.5.9" src="https://img.shields.io/badge/version-0.5.9-2ea44f?style=for-the-badge"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-3b82f6?style=for-the-badge"></a>
 </p>
 
@@ -216,6 +216,12 @@ The account rate needs a few hours of requests. Until then usagemax shows tokens
 <summary><b>I switch between two Claude accounts. Do their numbers mix?</b></summary>
 
 No. Each request carries the account it ran under, so a chat that moved to another account splits between the two. The panel, the band and the commands show only the signed-in account. Requests recorded before 0.5.8 go to the account whose limits they saw.
+</details>
+
+<details>
+<summary><b>My plan has no 5-hour limit. What does it show?</b></summary>
+
+The week alone. The chip, the line under an answer and the panel give each request's and each chat's share of the weekly limit: `◔ Used: +0.02% of the week 24K Tok`.
 </details>
 
 <details>

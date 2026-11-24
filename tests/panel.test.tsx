@@ -17,7 +17,7 @@ async function openViaButton($: Engine) {
   const button = await $.ui.mount({
     plugin: 'usagemax',
     component: 'AbovePrompt',
-    props: { hasSurvey: false, isWorking: false, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} },
+    props: { hasSurvey: false, isCollapsed: false, isWorking: false, maxRows: 10, bodyColumns: 80, scroll: { offset: 0, bodyRows: 10 }, view: {} },
     surface: 'desktop',
   })
   await button.pointer({ type: 'down', x: 2, y: 0, button: 'left', in: 'usagemax-band' })
@@ -100,7 +100,7 @@ test('names its build at the bottom', async ($, on) => {
   const k = kit(on)
   await twoTurns($, k)
   await openViaButton($)
-  expect((await texts($)).at(-1)).toBe('usagemax 0.5.8')
+  expect((await texts($)).at(-1)).toBe('usagemax 0.5.9')
 })
 
 test('places pace, trend, activity and models in their order', async ($, on) => {

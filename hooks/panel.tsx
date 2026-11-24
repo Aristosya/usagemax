@@ -7,7 +7,7 @@ import { formatPct5h, formatPctWeek, formatTok, visibleTokens } from './lib/form
 import { type Lang, type MsgKey, formatDuration, langOf, requestsLabel, t } from './lib/i18n'
 import { emptySession, loadAll } from './lib/ledger'
 import { calibrate } from './lib/percent'
-import { readingFrom } from './lib/readings'
+import { newestReading, readingFrom, weekOnly } from './lib/readings'
 import { resolveTitle } from './lib/title'
 import { forecast, periodBounds, sessionSummary, shareKey, topChats } from './lib/report'
 import { VERSION } from './lib/version'
@@ -86,17 +86,17 @@ export function requestLine(x: TurnRecord, tz: number, lang: Lang): string {
 }
 
 /** A top row's share in the period's own window: `–` while that window's rate is not ready. */
-export function rowShare(r: TopRow, p: Period): string {
-  if (shareKey(p) === 'pctWeek') return r.unknown?.seven_day ? '–' : shareWeek(r.pctWeek)
+export function rowShare(r: TopRow, p: Period, key = shareKey(p)): string {
+  if (key === 'pctWeek') return r.unknown?.seven_day ? '–' : shareWeek(r.pctWeek)
   return r.unknown?.five_hour ? '–' : share5(r.pct5h)
 }
 
-export function rowLines(r: TopRow, i: number, p: Period, lang: Lang): [string, string | null] {
+export function rowLines(r: TopRow, i: number, p: Period, lang: Lang, key = shareKey(p)): [string, string | null] {
   const tok = r.id === 'other' ? '' : `  ${formatTok(r.tokens)} Tok`
   const heavy = r.heaviest
-    ? `    ${shareKey(p) === 'pctWeek' ? shareWeek(r.heaviest.pctWeek) : share5(r.heaviest.pct5h)}  ${shownPrompt(r.heaviest.prompt, lang)}`
+    ? `    ${key === 'pctWeek' ? shareWeek(r.heaviest.pctWeek) : share5(r.heaviest.pct5h)}  ${shownPrompt(r.heaviest.prompt, lang)}`
     : null
-  const main = rowShare(r, p)
+  const main = rowShare(r, p, key)
   return [`${i + 1}. ${r.title}  ${main}${tok}`, heavy]
 }
 
@@ -131,11 +131,7 @@ export async function computePanel($: EngineInterface): Promise<PanelData> {
   const own = files.find(f => f.sessionId === sessionId) ?? emptySession(sessionId, await $.session.cwd(), now)
   // `$.session.usage()` answers this chat's last response; another chat may have read the windows later.
   const ownReading = readingFrom(await $.session.usage(), now)
-  const latest = all
-    .flatMap(f => f.turns.map(x => x.readings.after))
-    .filter((r): r is Reading => r !== null && r.at <= now && r.five_hour !== undefined)
-    .sort((a, b) => b.at - a.at)[0]
-  const current = latest ?? ownReading
+  const current = newestReading(all, now, scope.account) ?? ownReading
   const lang = await langOf($)
   const tz = -new Date(now).getTimezoneOffset()
   const other = t(lang, 'other.title')
@@ -163,6 +159,7 @@ export async function computePanel($: EngineInterface): Promise<PanelData> {
     tzOffsetMin: tz,
     at: now,
     rate,
+    fiveHour: !weekOnly(current),
     pace: current.five_hour ? paceOf(current.five_hour, now) : null,
     weekPace: current.seven_day ? paceOf(current.seven_day, now, WEEK_MS) : null,
     trend: { days, peakWeek: rate.seven_day === null || maxDay === 0 ? null : maxDay * rate.seven_day },
@@ -205,7 +202,7 @@ export async function openPanel($: EngineInterface): Promise<void> {
 export function usagePanel(on: On): void {
   on('ui.render', { component: 'Pane', requestId: PANE_ID }, async ($, e) => {
     const data = await read($, panel)
-    const chosen = await read($, period)
+    const picked = await read($, period)
     const armed = await read($, resetArmed)
     const { Box, Text, Button } = $.ui.resolve(e)
     if (!data) {
@@ -217,12 +214,19 @@ export function usagePanel(on: On): void {
       )
     }
     const { lang, session, windows, tzOffsetMin: tz } = data
+    // A plan without the 5-hour window has no 5-hour period, and every share is the week's.
+    const periods = data.fiveHour ? PERIODS : PERIODS.filter(p => p !== 'window5h')
+    const chosen = periods.includes(picked) ? picked : 'today'
     const rows = data.top[chosen]
-    const key = shareKey(chosen)
+    const key = data.fiveHour ? shareKey(chosen) : 'pctWeek'
     const trendMax = Math.max(0, ...data.trend.days.map(d => d.units))
     const heatMax = Math.max(0, ...data.heat.flat())
     const { rate } = data
-    const turnShare = (x: TurnRecord): string => (rate.five_hour === null ? '–' : formatPct5h(x.units * rate.five_hour))
+    const turnShare = (x: TurnRecord): string => {
+      const per = data.fiveHour ? rate.five_hour : rate.seven_day
+      if (per === null) return '–'
+      return data.fiveHour ? formatPct5h(x.units * per) : formatPctWeek(x.units * per)
+    }
     const topMax = Math.max(0.0001, ...rows.map(r => r[key]))
     const five = windows?.five_hour
 
@@ -286,7 +290,7 @@ export function usagePanel(on: On): void {
         {Row(
           <Text bold>{t(lang, 'panel.title')}</Text>,
           <Box flexDirection="row" gap={1}>
-            {PERIODS.map(p => (
+            {periods.map(p => (
               <Button key={`period-${p}`} label={t(lang, PERIOD_KEY[p])} variant={p === chosen ? 'primary' : 'secondary'} onPress={() => update($, period, () => p)} />
             ))}
           </Box>,
@@ -354,9 +358,15 @@ export function usagePanel(on: On): void {
             <Box flexDirection="column">
               {Row(
                 <Text bold wrap="truncate-end">{data.title === '' ? t(lang, 'panel.session') : data.title}</Text>,
-                <Text mono tabular>{t(lang, 'panel.ofWindow', { pct: session.unknown?.five_hour ? '–' : share5(session.pct5h) })}</Text>,
+                <Text mono tabular>
+                  {data.fiveHour
+                    ? t(lang, 'panel.ofWindow', { pct: session.unknown?.five_hour ? '–' : share5(session.pct5h) })
+                    : t(lang, 'panel.ofWeekLimit', { pct: session.unknown?.seven_day ? '–' : shareWeek(session.pctWeek) })}
+                </Text>,
               )}
-              {Bar(five && five.pct > 0 ? (session.pct5h / five.pct) * 100 : 0, COLOR_5H)}
+              {data.fiveHour
+                ? Bar(five && five.pct > 0 ? (session.pct5h / five.pct) * 100 : 0, COLOR_5H)
+                : Bar(windows?.seven_day && windows.seven_day.pct > 0 ? (session.pctWeek / windows.seven_day.pct) * 100 : 0, COLOR_WEEK)}
               <Text size="caption" dimColor wrap="truncate-end">
                 {session.heaviest
                   ? t(lang, 'panel.heaviestLine', {
@@ -400,7 +410,7 @@ export function usagePanel(on: On): void {
               <Box flexDirection="column" marginTop={1}>
                 {Row(
                   <Text dimColor={isOther} wrap="truncate-end">{r.title}</Text>,
-                  <Text mono tabular dimColor={isOther}>{rowShare(r, chosen)}</Text>,
+                  <Text mono tabular dimColor={isOther}>{rowShare(r, chosen, key)}</Text>,
                 )}
                 {Bar((r[key] / topMax) * 100, isOther ? COLOR_OTHER : key === 'pctWeek' ? COLOR_WEEK : COLOR_5H, TOP_BAR_WIDTH)}
                 {r.heaviest && (

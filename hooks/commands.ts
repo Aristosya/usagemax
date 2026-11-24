@@ -5,6 +5,7 @@ import { diskOf } from './lib/disk'
 import { type Lang, langOf, t } from './lib/i18n'
 import { sinceReset } from './lib/account'
 import { loadAll, loadOwn } from './lib/ledger'
+import { shareKey } from './lib/report'
 import { PERIOD_KEY, computePanel, openPanel, requestLine, rowLines } from './panel'
 import { scopeOf, splitScope } from './scope'
 
@@ -14,11 +15,11 @@ const HISTORY_MS = 7 * 86_400_000
 const ARG_PERIOD: Readonly<Record<string, Period>> = { hour: 'hour', today: 'today', yesterday: 'yesterday', '5h': 'window5h', week: 'week' }
 
 /** The full top of a period as plain text, one chat per line with its heaviest request under it. */
-export function reportText(rows: readonly TopRow[], p: Period, lang: Lang): string {
+export function reportText(rows: readonly TopRow[], p: Period, lang: Lang, key = shareKey(p)): string {
   const lines = [t(lang, 'report.top', { period: t(lang, PERIOD_KEY[p]) })]
   if (rows.length === 0) lines.push(t(lang, 'report.none'))
   rows.forEach((r, i) => {
-    const [line, heavy] = rowLines(r, i, p, lang)
+    const [line, heavy] = rowLines(r, i, p, lang, key)
     lines.push(line)
     if (heavy !== null) lines.push(heavy)
   })
@@ -34,7 +35,8 @@ export function chatText(turns: readonly TurnRecord[], lang: Lang, tz: number): 
 
 async function topReport($: EngineInterface, p: Period): Promise<string> {
   const data = await computePanel($)
-  return reportText(data.top[p], p, data.lang)
+  // A plan without the 5-hour window: every period's share is the week's.
+  return reportText(data.top[p], p, data.lang, data.fiveHour ? shareKey(p) : 'pctWeek')
 }
 
 async function chatReport($: EngineInterface): Promise<string> {

@@ -22,7 +22,7 @@ claude plugin install usagemax@usagemax --scope user
 ## Facts
 
 - Platform: Claude Desktop, Code tab. Tested with Claude Code 2.1.304 on Windows 11.
-- Needs a Claude subscription with the 5-hour and weekly limits, such as Pro or Max. API-key sessions get tokens only.
+- Needs a Claude subscription with the 5-hour and weekly limits, such as Pro or Max. On a plan with the weekly limit alone, the chip, the line and the panel show weekly shares. API-key sessions get tokens only.
 - Storage: `%USERPROFILE%\.claude\usagemax\sessions\<chat id>.json`, 30-day retention, first 120 characters of each prompt.
 - Accounts: each request records the Claude account it ran under, from the chat's environment (`CLAUDE_CODE_ACCOUNT_UUID`, set by Claude Desktop) or Claude Code's `.claude.json`. Each account learns its own rate. The panel, the band and the commands show only the signed-in account. `accounts.json` keeps each account's last reset.
 - Network: one `git fetch` of this repository at most once an hour when installed from GitHub, so Claude Code's Update button finds new versions; `"selfUpdate": false` in settings.json turns it off. No usage data leaves the computer.

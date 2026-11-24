@@ -61,6 +61,7 @@ export function kit(on: On, o: { sessionId?: string; now?: number; language?: st
     return { value: { startedAt: 0, context: { window: 1_000_000 }, rateLimits } }
   })
   on('session.start', (_$, e) => ({ cwd: e.cwd }))
+  on('session.measure', (_$, e) => ({ changed: e.changed }))
   on('turn.start', (_$, e) => ({ turnId: e.turnId }))
   on('turn.complete', () => ({ text: '' }))
   on('agent.spawn', () => ({ model: 'claude-haiku-5-5', agentId: 'agent-1' }))
